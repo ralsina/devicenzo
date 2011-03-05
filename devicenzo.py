@@ -25,8 +25,8 @@ class MainWindow(QtGui.QMainWindow):
         self.tb.addWidget(self.url)
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage)
         self.tb.addAction(self.star)
-        self.bookmarkPage() # This triggers building the bookmarks menu
-        
+        self.bookmarkPage()  # This triggers building the bookmarks menu
+
         self.wb.urlChanged.connect(lambda u: self.url.setText(u.toString()))
         self.wb.urlChanged.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(i.url().toString()) for i in self.wb.history().items()]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
         self.wb.urlChanged.connect(lambda u: self.star.setChecked(unicode(u.toString()) in self.bookmarks))
@@ -65,7 +65,7 @@ class MainWindow(QtGui.QMainWindow):
         elif v is not None:
             del (self.bookmarks[unicode(self.url.text())])
         self.star.setMenu(QtGui.QMenu())
-        [ self.star.menu().addAction(QtGui.QAction(title, self, activated = lambda u=QtCore.QUrl(url): self.wb.load(u))) for url, title in self.bookmarks.items()]
+        [self.star.menu().addAction(QtGui.QAction(title, self, activated=lambda u=QtCore.QUrl(url): self.wb.load(u))) for url, title in self.bookmarks.items()]
         self.put('bookmarks', self.bookmarks)
 
 if __name__ == "__main__":
