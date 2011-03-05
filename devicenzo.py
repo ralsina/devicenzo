@@ -23,7 +23,8 @@ class MainWindow(QtGui.QMainWindow):
 
         self.url = QtGui.QLineEdit(returnPressed=lambda: self.wb.setUrl(QtCore.QUrl.fromUserInput(self.url.text())))
         self.tb.addWidget(self.url)
-        self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Favourite", self, checkable=True, toggled=self.bookmarkPage)
+        self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, toggled=self.bookmarkPage)
+        self.bookmarkPage()
         self.tb.addAction(self.star)
 
         self.wb.urlChanged.connect(lambda u: self.url.setText(u.toString()))
@@ -58,8 +59,11 @@ class MainWindow(QtGui.QMainWindow):
         v = self.settings.value(key)
         return json.loads(unicode(v.toString())) if v.isValid() else default
 
-    def bookmarkPage(self, v):
-        self.bookmarks[unicode(self.url.text())] = unicode(self.windowTitle())
+    def bookmarkPage(self, v=None):
+        if v and v is not None:
+            self.bookmarks[unicode(self.url.text())] = unicode(self.windowTitle())
+        elif v is not None:
+            del (self.bookmarks[unicode(self.url.text())])
         self.put('bookmarks', self.bookmarks)
 
 if __name__ == "__main__":
