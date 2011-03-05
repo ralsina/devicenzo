@@ -23,9 +23,10 @@ class MainWindow(QtGui.QMainWindow):
 
         self.url = QtGui.QLineEdit(returnPressed=lambda: self.wb.setUrl(QtCore.QUrl.fromUserInput(self.url.text())))
         self.tb.addWidget(self.url)
-        self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, toggled=self.bookmarkPage)
+        self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage)
         self.tb.addAction(self.star)
-
+        self.bookmarkPage() # This triggers building the bookmarks menu
+        
         self.wb.urlChanged.connect(lambda u: self.url.setText(u.toString()))
         self.wb.urlChanged.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(i.url().toString()) for i in self.wb.history().items()]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
         self.wb.urlChanged.connect(lambda u: self.star.setChecked(unicode(u.toString()) in self.bookmarks))
