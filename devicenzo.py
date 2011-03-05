@@ -9,6 +9,7 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self, url):
         QtGui.QMainWindow.__init__(self)
         self.settings = QtCore.QSettings("ralsina", "devicenzo")
+        self.bookmarks = self.get("bookmarks", {})
         self.sb = self.statusBar()
 
         self.pbar = QtGui.QProgressBar()
@@ -27,6 +28,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.wb.urlChanged.connect(lambda u: self.url.setText(u.toString()))
         self.wb.urlChanged.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(i.url().toString()) for i in self.wb.history().items()]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
+        self.wb.urlChanged.connect(lambda u: self.star.setChecked(unicode(u.toString()) in self.bookmarks))
 
         self.wb.statusBarMessage.connect(self.sb.showMessage)
         self.wb.page().linkHovered.connect(lambda l: self.sb.showMessage(l, 3000))
@@ -57,9 +59,8 @@ class MainWindow(QtGui.QMainWindow):
         return json.loads(unicode(v.toString())) if v.isValid() else default
 
     def bookmarkPage(self, v):
-        bdict = self.get('bookmarks', {})
-        bdict[unicode(self.url.text())] = unicode(self.windowTitle())
-        self.put('bookmarks', bdict)
+        self.bookmarks[unicode(self.url.text())] = unicode(self.windowTitle())
+        self.put('bookmarks', self.bookmarks)
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
