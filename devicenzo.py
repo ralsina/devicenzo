@@ -23,11 +23,12 @@ class MainWindow(QtGui.QMainWindow):
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
         self.cookies = QtNetwork.QNetworkCookieJar()
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
-        self.addTab(url)
+        [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", []) + [url]]
 
     def close(self):
         self.put("history", self.history)
         self.put("cookiejar", [str(c.toRawForm()) for c in self.cookies.allCookies()])
+        self.put("tabs", [unicode(self.tabs.widget(i).url.text()) for i in range(self.tabs.count())])
         QtGui.QMainWindow.close(self)
 
     def put(self, key, value):
@@ -126,9 +127,9 @@ class Tab(QtWebKit.QWebView):
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     if len(sys.argv) > 1:
-        url = QtCore.QUrl.fromUserInput(sys.argv[1])
+        url = unicode(QtCore.QUrl.fromUserInput(sys.argv[1]).toString())
     else:
-        url = QtCore.QUrl('http://devicenzo.googlecode.com')
+        url = 'http://code.google.com/p/devicenzo/'
     wb = MainWindow(url)
     wb.show()
     sys.exit(app.exec_())
