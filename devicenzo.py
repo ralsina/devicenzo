@@ -98,7 +98,7 @@ class Tab(QtWebKit.QWebView):
         self.showSearch = QtGui.QShortcut("Ctrl+F", self, activated=lambda: self.search.show() or self.search.setFocus())
         self.hideSearch = QtGui.QShortcut("Esc", self, activated=lambda: (self.search.hide(), self.setFocus()))
 
-        self.quit = QtGui.QShortcut("Ctrl+Q", self, activated=self.close)
+        self.quit = QtGui.QShortcut("Ctrl+W", self, activated=lambda: container.tabs.removeTab(container.tabs.indexOf(self)))
         self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda: self.setZoomFactor(self.zoomFactor() + 0.2))
         self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda: self.setZoomFactor(self.zoomFactor() - 0.2))
         self.zoomOne = QtGui.QShortcut("Ctrl+0", self, activated=lambda: self.setZoomFactor(1))
