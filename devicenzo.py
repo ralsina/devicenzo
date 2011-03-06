@@ -62,7 +62,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def addToHistory(self, url):
         self.history.append(url)
-        self.completer.setModel(QtGui.QStringListModel(list(set(self.bookmarks.keys()+self.history))))
+        self.completer.setModel(QtGui.QStringListModel(list(set(self.bookmarks.keys() + self.history))))
+
 
 class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
