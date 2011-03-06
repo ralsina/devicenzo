@@ -114,7 +114,7 @@ class Tab(QtWebKit.QWebView):
 
     def createWindow(self, windowType):
         return self.container.addTab()
-        
+
     def printPage(self):
         vps = self.page().viewportSize()
         self.page().setViewportSize(self.page().mainFrame().contentsSize())
