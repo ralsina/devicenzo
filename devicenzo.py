@@ -30,7 +30,6 @@ class MainWindow(QtGui.QMainWindow):
         v = settings.value(key)
         return json.loads(unicode(v.toString())) if v.isValid() else default
 
-    QtCore.pyqtSlot()
     def addTab(self, url=QtCore.QUrl()):
         self.tabs.setCurrentIndex(self.tabs.addTab(Tab(url, self), ""))
         return self.tabs.currentWidget()
