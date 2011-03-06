@@ -15,12 +15,11 @@ class MainWindow(QtGui.QMainWindow):
         self.sb = self.statusBar()
         self.tabWidgets = []
         self.addTab(url)
-        self.addTab(url)
-        self.addTab(url)
-        self.addTab(url)
 
-    def addTab(self, url):
-        self.tabs.addTab(Tab(url, self), "")
+    def addTab(self, url=QtCore.QUrl()):
+        t = Tab(url, self)
+        self.tabs.addTab(t, "")
+        return t
 
     def currentTabChanged(self, idx):
         wb = self.tabs.widget(idx)
@@ -28,18 +27,20 @@ class MainWindow(QtGui.QMainWindow):
             w.hide()
         self.tabWidgets = [wb.tb, wb.pbar, wb.search]
         self.addToolBar(wb.tb)
-        for w in self.tabWidgets[:-1]:
+        for w in self.tabWidgets[:-2]:
             w.show()
 
 
 class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
+        self.container = container
         self.pbar = QtGui.QProgressBar()
         QtWebKit.QWebView.__init__(self, loadProgress=self.pbar.setValue, loadFinished=self.pbar.hide, loadStarted=self.pbar.show, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t))
 
         self.bookmarks = self.get("bookmarks", {})
         self.pbar.setMaximumWidth(120)
         container.sb.addPermanentWidget(self.pbar)
+        self.pbar.hide()
 
         self.tb = QtGui.QToolBar("Main Toolbar")
         for a in (QtWebKit.QWebPage.Back, QtWebKit.QWebPage.Forward, QtWebKit.QWebPage.Reload):
@@ -50,6 +51,8 @@ class Tab(QtWebKit.QWebView):
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage)
         self.tb.addAction(self.star)
         self.bookmarkPage()  # This triggers building the bookmarks menu
+        self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=self.createWindow)
+        self.tb.addAction(self.newtab)
 
         self.urlChanged.connect(lambda u: self.url.setText(u.toString()))
         self.urlChanged.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(i.url().toString()) for i in self.history().items()]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
@@ -90,6 +93,9 @@ class Tab(QtWebKit.QWebView):
         self.star.setMenu(QtGui.QMenu())
         [self.star.menu().addAction(QtGui.QAction(title, self, activated=lambda u=QtCore.QUrl(url): self.load(u))) for url, title in self.bookmarks.items()]
         self.put('bookmarks', self.bookmarks)
+
+    def createWindow(self, windowType):
+        return self.container.addTab()
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
