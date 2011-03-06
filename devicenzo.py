@@ -10,7 +10,7 @@ settings = QtCore.QSettings("ralsina", "devicenzo")
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, url):
         QtGui.QMainWindow.__init__(self)
-        self.tabs = QtGui.QTabWidget(self, tabsClosable=True, movable=True, currentChanged=self.currentTabChanged, elideMode=QtCore.Qt.ElideRight)
+        self.tabs = QtGui.QTabWidget(self, tabsClosable=True, movable=True, currentChanged=self.currentTabChanged, elideMode=QtCore.Qt.ElideRight, tabCloseRequested=lambda idx: self.tabs.widget(idx).deleteLater())
         self.setCentralWidget(self.tabs)
         self.sb = self.statusBar()
         self.tabWidgets = []
@@ -23,6 +23,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def currentTabChanged(self, idx):
         wb = self.tabs.widget(idx)
+        if wb is None:
+            return self.close()
         self.setWindowTitle(wb.title() or "De Vicenzo")
         for w in self.tabWidgets:
             w.hide()
