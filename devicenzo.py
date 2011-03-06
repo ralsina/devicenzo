@@ -16,6 +16,7 @@ class MainWindow(QtGui.QMainWindow):
         self.tabWidgets = []
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage, shortcut="Ctrl+d")
         self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=lambda: self.addTab(), shortcut="Ctrl+t")
+        self.addAction(QtGui.QAction("Full Screen", self, checkable=True, toggled=lambda v: self.showFullScreen() if v else self.showNormal(), shortcut="F11"))
         self.bookmarks = self.get("bookmarks", {})
         self.bookmarkPage()  # Load the bookmarks menu
         self.history = self.get("history", []) + self.bookmarks.keys()
