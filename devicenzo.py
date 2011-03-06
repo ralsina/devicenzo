@@ -116,6 +116,7 @@ class Tab(QtWebKit.QWebView):
         return self.container.addTab()
 
     def printPage(self):
+        # FIXME: make this generate PDFs instead, using QPrinter
         vps = self.page().viewportSize()
         self.page().setViewportSize(self.page().mainFrame().contentsSize())
         img = QtGui.QImage(self.page().mainFrame().contentsSize(), QtGui.QImage.Format_ARGB32)
