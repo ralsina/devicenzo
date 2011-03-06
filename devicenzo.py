@@ -8,7 +8,7 @@ settings = QtCore.QSettings("ralsina", "devicenzo")
 
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self, url):
+    def __init__(self):
         QtGui.QMainWindow.__init__(self)
         self.tabs = QtGui.QTabWidget(self, tabsClosable=True, movable=True, currentChanged=self.currentTabChanged, elideMode=QtCore.Qt.ElideRight, tabCloseRequested=lambda idx: self.tabs.widget(idx).deleteLater())
         self.setCentralWidget(self.tabs)
@@ -23,7 +23,7 @@ class MainWindow(QtGui.QMainWindow):
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
         self.cookies = QtNetwork.QNetworkCookieJar()
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
-        [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", []) + [url]]
+        [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", [])]
 
     def close(self):
         self.put("history", self.history)
@@ -126,10 +126,10 @@ class Tab(QtWebKit.QWebView):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    if len(sys.argv) > 1:
-        url = unicode(QtCore.QUrl.fromUserInput(sys.argv[1]).toString())
-    else:
-        url = 'http://code.google.com/p/devicenzo/'
-    wb = MainWindow(url)
+    wb = MainWindow()
+    for url in sys.argv[1:]:
+        wb.addTab(QtCore.QUrl.fromUserInput(url))
+    if wb.tabs.count() == 0:
+        wb.addTab(QtCore.QUrl('http://devicenzo.googlecode.com'))
     wb.show()
     sys.exit(app.exec_())
