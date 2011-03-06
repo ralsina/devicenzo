@@ -104,7 +104,9 @@ class Tab(QtWebKit.QWebView):
         self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda: self.setZoomFactor(self.zoomFactor() + 0.2))
         self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda: self.setZoomFactor(self.zoomFactor() - 0.2))
         self.zoomOne = QtGui.QShortcut("Ctrl+0", self, activated=lambda: self.setZoomFactor(1))
-        self.do_print = QtGui.QShortcut("Ctrl+p", self, activated=self.printPage)
+        
+        self.previewer = QtGui.QPrintPreviewDialog(paintRequested = self.print_)
+        self.do_print = QtGui.QShortcut("Ctrl+p", self, activated=self.previewer.exec_)
         self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
 
         container.sb.addPermanentWidget(self.search)
@@ -114,19 +116,6 @@ class Tab(QtWebKit.QWebView):
 
     def createWindow(self, windowType):
         return self.container.addTab()
-
-    def printPage(self):
-        # FIXME: make this generate PDFs instead, using QPrinter
-        vps = self.page().viewportSize()
-        self.page().setViewportSize(self.page().mainFrame().contentsSize())
-        img = QtGui.QImage(self.page().mainFrame().contentsSize(), QtGui.QImage.Format_ARGB32)
-        painter = QtGui.QPainter(img)
-        self.page().mainFrame().render(painter)
-        painter.end()
-        self.page().setViewportSize(vps)
-        r = QtGui.QFileDialog.getSaveFileName()
-        if r:
-            img.save(r)
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
