@@ -15,8 +15,9 @@ class MainWindow(QtGui.QMainWindow):
         self.sb = self.statusBar()
         self.tabWidgets = []
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage)
-        self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=self.addTab)
+        self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=lambda: self.addTab())
         self.bookmarks = self.get("bookmarks", {})
+        self.bookmarkPage()  # Load the bookmarks menu
         self.addTab(url)
 
     def put(self, key, value):
@@ -31,9 +32,8 @@ class MainWindow(QtGui.QMainWindow):
 
     QtCore.pyqtSlot()
     def addTab(self, url=QtCore.QUrl()):
-        t = Tab(url, self)
-        self.tabs.addTab(t, "")
-        return t
+        self.tabs.setCurrentIndex(self.tabs.addTab(Tab(url, self), ""))
+        return self.tabs.currentWidget()
 
     def currentTabChanged(self, idx):
         wb = self.tabs.widget(idx)
@@ -77,8 +77,7 @@ class Tab(QtWebKit.QWebView):
 
         self.urlChanged.connect(lambda u: self.url.setText(u.toString()))
         self.urlChanged.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(i.url().toString()) for i in self.history().items()]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
-        # FIXME: this one doesn't work because star is in container
-        self.urlChanged.connect(lambda u: self.star.setChecked(unicode(u.toString()) in self.bookmarks))
+        self.urlChanged.connect(lambda u: container.star.setChecked(unicode(u.toString()) in container.bookmarks) if self.amCurrent() else None)
 
         self.statusBarMessage.connect(container.sb.showMessage)
         self.page().linkHovered.connect(lambda l: container.sb.showMessage(l, 3000))
