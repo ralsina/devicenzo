@@ -2,7 +2,7 @@
 "A web browser that will never exceed 128 lines of code. (not counting blanks)"
 
 import sys, json
-from PyQt4 import QtGui, QtCore, QtWebKit
+from PyQt4 import QtGui, QtCore, QtWebKit, QtNetwork
 
 settings = QtCore.QSettings("ralsina", "devicenzo")
 
@@ -21,10 +21,14 @@ class MainWindow(QtGui.QMainWindow):
         self.bookmarkPage()  # Load the bookmarks menu
         self.history = self.get("history", []) + self.bookmarks.keys()
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
+        self.cookies = QtNetwork.QNetworkCookieJar()
+        self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
         self.addTab(url)
 
     def close(self):
         self.put("history", self.history)
+        self.put("cookiejar", [str(c.toRawForm()) for c in self.cookies.allCookies()])
+        QtGui.QMainWindow.close(self)
 
     def put(self, key, value):
         "Persist an object somewhere under a given key"
@@ -71,6 +75,7 @@ class Tab(QtWebKit.QWebView):
         self.container = container
         self.pbar = QtGui.QProgressBar()
         QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None))
+        self.page().networkAccessManager().setCookieJar(container.cookies)
 
         self.pbar.setMaximumWidth(120)
         container.sb.addPermanentWidget(self.pbar)
@@ -100,7 +105,7 @@ class Tab(QtWebKit.QWebView):
         self.hideSearch = QtGui.QShortcut("Esc", self, activated=lambda: (self.search.hide(), self.setFocus()))
 
         self.do_close = QtGui.QShortcut("Ctrl+W", self, activated=lambda: container.tabs.removeTab(container.tabs.indexOf(self)))
-        self.do_quit = QtGui.QShortcut("Ctrl+q", self, activated=lambda: QtCore.QCoreApplication.instance().quit())
+        self.do_quit = QtGui.QShortcut("Ctrl+q", self, activated=lambda: container.close())
         self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda: self.setZoomFactor(self.zoomFactor() + 0.2))
         self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda: self.setZoomFactor(self.zoomFactor() - 0.2))
         self.zoomOne = QtGui.QShortcut("Ctrl+0", self, activated=lambda: self.setZoomFactor(1))
@@ -116,6 +121,7 @@ class Tab(QtWebKit.QWebView):
 
     def createWindow(self, windowType):
         return self.container.addTab()
+
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
