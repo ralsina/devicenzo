@@ -23,6 +23,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def currentTabChanged(self, idx):
         wb = self.tabs.widget(idx)
+        self.setWindowTitle(wb.title() or "De Vicenzo")
         for w in self.tabWidgets:
             w.hide()
         self.tabWidgets = [wb.tb, wb.pbar, wb.search]
@@ -35,7 +36,7 @@ class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
         self.container = container
         self.pbar = QtGui.QProgressBar()
-        QtWebKit.QWebView.__init__(self, loadProgress=self.pbar.setValue, loadFinished=self.pbar.hide, loadStarted=self.pbar.show, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t))
+        QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None))
 
         self.bookmarks = self.get("bookmarks", {})
         self.pbar.setMaximumWidth(120)
@@ -74,6 +75,8 @@ class Tab(QtWebKit.QWebView):
 
         container.sb.addPermanentWidget(self.search)
         self.load(url)
+
+    amCurrent = lambda self: self.container.tabs.currentWidget() == self
 
     def put(self, key, value):
         "Persist an object somewhere under a given key"
