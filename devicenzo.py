@@ -104,8 +104,8 @@ class Tab(QtWebKit.QWebView):
         self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda: self.setZoomFactor(self.zoomFactor() + 0.2))
         self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda: self.setZoomFactor(self.zoomFactor() - 0.2))
         self.zoomOne = QtGui.QShortcut("Ctrl+0", self, activated=lambda: self.setZoomFactor(1))
-        
-        self.previewer = QtGui.QPrintPreviewDialog(paintRequested = self.print_)
+
+        self.previewer = QtGui.QPrintPreviewDialog(paintRequested=self.print_)
         self.do_print = QtGui.QShortcut("Ctrl+p", self, activated=self.previewer.exec_)
         self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
 
