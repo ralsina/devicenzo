@@ -19,6 +19,7 @@ class MainWindow(QtGui.QMainWindow):
         self.bookmarks = self.get("bookmarks", {})
         self.bookmarkPage()  # Load the bookmarks menu
         self.history = self.get("history", []) + self.bookmarks.keys()
+        self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
         self.addTab(url)
 
     def close(self):
@@ -59,6 +60,9 @@ class MainWindow(QtGui.QMainWindow):
         [self.star.menu().addAction(QtGui.QAction(title, self, activated=lambda u=QtCore.QUrl(url): self.tabs.currentWidget().load(u))) for url, title in self.bookmarks.items()]
         self.put('bookmarks', self.bookmarks)
 
+    def addToHistory(self, url):
+        self.history.append(url)
+        self.completer.setModel(QtGui.QStringListModel(list(set(self.bookmarks.keys()+self.history))))
 
 class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
@@ -75,13 +79,14 @@ class Tab(QtWebKit.QWebView):
             self.tb.addAction(self.pageAction(a))
 
         self.url = QtGui.QLineEdit(returnPressed=lambda: self.setUrl(QtCore.QUrl.fromUserInput(self.url.text())))
+        self.url.setCompleter(container.completer)
         self.tb.addWidget(self.url)
         self.tb.addAction(container.star)
         self.tb.addAction(container.newtab)
 
+        # FIXME: if I was seriously golfing, all of these can go in a single lambda
         self.urlChanged.connect(lambda u: self.url.setText(u.toString()))
-        self.urlChanged.connect(lambda u: container.history.append(unicode(u.toString())))
-        #self.url.textEdited.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in container.history]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
+        self.urlChanged.connect(lambda u: container.addToHistory(unicode(u.toString())))
         self.urlChanged.connect(lambda u: container.star.setChecked(unicode(u.toString()) in container.bookmarks) if self.amCurrent() else None)
 
         self.statusBarMessage.connect(container.sb.showMessage)
