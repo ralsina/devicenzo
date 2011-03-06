@@ -14,8 +14,22 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.tabs)
         self.sb = self.statusBar()
         self.tabWidgets = []
+        self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage)
+        self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=self.addTab)
+        self.bookmarks = self.get("bookmarks", {})
         self.addTab(url)
 
+    def put(self, key, value):
+        "Persist an object somewhere under a given key"
+        settings.setValue(key, json.dumps(value))
+        settings.sync()
+
+    def get(self, key, default=None):
+        "Get the object stored under 'key' in persistent storage, or the default value"
+        v = settings.value(key)
+        return json.loads(unicode(v.toString())) if v.isValid() else default
+
+    QtCore.pyqtSlot()
     def addTab(self, url=QtCore.QUrl()):
         t = Tab(url, self)
         self.tabs.addTab(t, "")
@@ -33,6 +47,14 @@ class MainWindow(QtGui.QMainWindow):
         for w in self.tabWidgets[:-2]:
             w.show()
 
+    def bookmarkPage(self, v=None):
+        if v and v is not None:
+            self.bookmarks[unicode(self.tabs.currentWidget().url.text())] = unicode(self.tabs.currentWidget().title())
+        elif v is not None:
+            del (self.bookmarks[unicode(self.tabs.currentWidget().url.text())])
+        self.star.setMenu(QtGui.QMenu())
+        [self.star.menu().addAction(QtGui.QAction(title, self, activated=lambda u=QtCore.QUrl(url): self.tabs.currentWidget().load(u))) for url, title in self.bookmarks.items()]
+        self.put('bookmarks', self.bookmarks)
 
 class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
@@ -40,7 +62,6 @@ class Tab(QtWebKit.QWebView):
         self.pbar = QtGui.QProgressBar()
         QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None))
 
-        self.bookmarks = self.get("bookmarks", {})
         self.pbar.setMaximumWidth(120)
         container.sb.addPermanentWidget(self.pbar)
         self.pbar.hide()
@@ -51,14 +72,12 @@ class Tab(QtWebKit.QWebView):
 
         self.url = QtGui.QLineEdit(returnPressed=lambda: self.setUrl(QtCore.QUrl.fromUserInput(self.url.text())))
         self.tb.addWidget(self.url)
-        self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage)
-        self.tb.addAction(self.star)
-        self.bookmarkPage()  # This triggers building the bookmarks menu
-        self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=self.createWindow)
-        self.tb.addAction(self.newtab)
+        self.tb.addAction(container.star)
+        self.tb.addAction(container.newtab)
 
         self.urlChanged.connect(lambda u: self.url.setText(u.toString()))
         self.urlChanged.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(i.url().toString()) for i in self.history().items()]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
+        # FIXME: this one doesn't work because star is in container
         self.urlChanged.connect(lambda u: self.star.setChecked(unicode(u.toString()) in self.bookmarks))
 
         self.statusBarMessage.connect(container.sb.showMessage)
@@ -79,25 +98,6 @@ class Tab(QtWebKit.QWebView):
         self.load(url)
 
     amCurrent = lambda self: self.container.tabs.currentWidget() == self
-
-    def put(self, key, value):
-        "Persist an object somewhere under a given key"
-        settings.setValue(key, json.dumps(value))
-        settings.sync()
-
-    def get(self, key, default=None):
-        "Get the object stored under 'key' in persistent storage, or the default value"
-        v = settings.value(key)
-        return json.loads(unicode(v.toString())) if v.isValid() else default
-
-    def bookmarkPage(self, v=None):
-        if v and v is not None:
-            self.bookmarks[unicode(self.url.text())] = unicode(self.windowTitle())
-        elif v is not None:
-            del (self.bookmarks[unicode(self.url.text())])
-        self.star.setMenu(QtGui.QMenu())
-        [self.star.menu().addAction(QtGui.QAction(title, self, activated=lambda u=QtCore.QUrl(url): self.load(u))) for url, title in self.bookmarks.items()]
-        self.put('bookmarks', self.bookmarks)
 
     def createWindow(self, windowType):
         return self.container.addTab()
