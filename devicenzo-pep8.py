@@ -13,38 +13,40 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.tabs = QtGui.QTabWidget(self, tabsClosable=True, movable=True,
             currentChanged=self.currentTabChanged,
-            elideMode=QtCore.Qt.ElideRight, tabCloseRequested=lambda idx:
-                self.tabs.widget(idx).deleteLater())
+            elideMode=QtCore.Qt.ElideRight,
+            tabCloseRequested=lambda idx: self.tabs.widget(idx).deleteLater())
         self.setCentralWidget(self.tabs)
         self.sb = self.statusBar()
         self.tabWidgets = []
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"),
-            "Bookmark", self, checkable=True,
-            triggered=self.bookmarkPage, shortcut="Ctrl+d")
+            "Bookmark", self, checkable=True, triggered=self.bookmarkPage,
+            shortcut="Ctrl+d")
         self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"),
             "New Tab", self, triggered=lambda: self.addTab(),
             shortcut="Ctrl+t")
+        self.addAction(QtGui.QAction("Full Screen", self, checkable=True,
+            toggled=lambda v:
+                self.showFullScreen() if v else self.showNormal(),
+            shortcut="F11"))
         self.bookmarks = self.get("bookmarks", {})
         self.bookmarkPage()  # Load the bookmarks menu
         self.history = self.get("history", []) + self.bookmarks.keys()
-        self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u)
-            for u in self.history]))
+        self.completer = QtGui.QCompleter(QtCore.QStringList(
+            [QtCore.QString(u) for u in self.history]))
         self.addTab(url)
 
     def close(self):
         self.put("history", self.history)
 
     def put(self, key, value):
-        "Persist an object somewhere under a given key"
         settings.setValue(key, json.dumps(value))
         settings.sync()
 
     def get(self, key, default=None):
-        "Get the object 'key' in persistent storage, or the default value"
         v = settings.value(key)
         return json.loads(unicode(v.toString())) if v.isValid() else default
 
-    def addTab(self, url=QtCore.QUrl()):
+    def addTab(self, url=QtCore.QUrl("http://devicenzo.googlecode.com")):
         self.tabs.setCurrentIndex(self.tabs.addTab(Tab(url, self), ""))
         return self.tabs.currentWidget()
 
@@ -69,8 +71,8 @@ class MainWindow(QtGui.QMainWindow):
         self.star.setMenu(QtGui.QMenu())
         [self.star.menu().addAction(QtGui.QAction(title, self,
             activated=lambda u=QtCore.QUrl(url):
-                self.tabs.currentWidget().load(u)))
-                for url, title in self.bookmarks.items()]
+                self.tabs.currentWidget().load(u))) for url, title in
+                self.bookmarks.items()]
         self.put('bookmarks', self.bookmarks)
 
     def addToHistory(self, url):
@@ -83,13 +85,14 @@ class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
         self.container = container
         self.pbar = QtGui.QProgressBar()
-        QtWebKit.QWebView.__init__(self, loadProgress=lambda v:
-            (self.pbar.show(), self.pbar.setValue(v))
-                if self.amCurrent() else None, loadFinished=self.pbar.hide,
-            loadStarted=lambda: self.pbar.show() if self.amCurrent() else None,
-            titleChanged=lambda t: container.tabs.setTabText(
-                container.tabs.indexOf(self), t) or
-                (container.setWindowTitle(t) if self.amCurrent() else None))
+        QtWebKit.QWebView.__init__(self,
+            loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v))
+                if self.amCurrent() else None,
+            loadFinished=self.pbar.hide, loadStarted=lambda:
+                    self.pbar.show() if self.amCurrent() else None,
+            titleChanged=lambda t:
+                container.tabs.setTabText(container.tabs.indexOf(self), t)
+                or (container.setWindowTitle(t) if self.amCurrent() else None))
 
         self.pbar.setMaximumWidth(120)
         container.sb.addPermanentWidget(self.pbar)
@@ -107,8 +110,7 @@ class Tab(QtWebKit.QWebView):
         self.tb.addAction(container.star)
         self.tb.addAction(container.newtab)
 
-        # FIXME: if I was seriously golfing,
-        # all of these can go in a single lambda
+        # FIXME: if I was seriously golfing, all of these can go in 1 lambda
         self.urlChanged.connect(lambda u: self.url.setText(u.toString()))
         self.urlChanged.connect(lambda u:
             container.addToHistory(unicode(u.toString())))
@@ -123,18 +125,25 @@ class Tab(QtWebKit.QWebView):
         self.search = QtGui.QLineEdit(returnPressed=lambda:
             self.findText(self.search.text()))
         self.search.hide()
-        self.showSearch = QtGui.QShortcut("Ctrl+F", self, activated=lambda:
-            self.search.show() or self.search.setFocus())
-        self.hideSearch = QtGui.QShortcut("Esc", self, activated=lambda:
-            (self.search.hide(), self.setFocus()))
+        self.showSearch = QtGui.QShortcut("Ctrl+F", self,
+            activated=lambda: self.search.show() or self.search.setFocus())
+        self.hideSearch = QtGui.QShortcut("Esc", self,
+            activated=lambda: (self.search.hide(), self.setFocus()))
 
-        self.quit = QtGui.QShortcut("Ctrl+Q", self, activated=self.close)
+        self.do_close = QtGui.QShortcut("Ctrl+W", self, activated=lambda:
+            container.tabs.removeTab(container.tabs.indexOf(self)))
+        self.do_quit = QtGui.QShortcut("Ctrl+q", self, activated=lambda:
+            QtCore.QCoreApplication.instance().quit())
         self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda:
             self.setZoomFactor(self.zoomFactor() + 0.2))
         self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda:
             self.setZoomFactor(self.zoomFactor() - 0.2))
         self.zoomOne = QtGui.QShortcut("Ctrl+0", self, activated=lambda:
             self.setZoomFactor(1))
+
+        self.previewer = QtGui.QPrintPreviewDialog(paintRequested=self.print_)
+        self.do_print = QtGui.QShortcut("Ctrl+p", self,
+            activated=self.previewer.exec_)
         self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled,
             True)
 
@@ -151,7 +160,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         url = QtCore.QUrl.fromUserInput(sys.argv[1])
     else:
-        url = QtCore.QUrl('http://www.python.org')
+        url = QtCore.QUrl('http://devicenzo.googlecode.com')
     wb = MainWindow(url)
     wb.show()
     sys.exit(app.exec_())
