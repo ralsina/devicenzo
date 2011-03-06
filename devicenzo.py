@@ -18,7 +18,11 @@ class MainWindow(QtGui.QMainWindow):
         self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=lambda: self.addTab())
         self.bookmarks = self.get("bookmarks", {})
         self.bookmarkPage()  # Load the bookmarks menu
+        self.history = self.get("history", []) + self.bookmarks.keys()
         self.addTab(url)
+
+    def close(self):
+        self.put("history", self.history)
 
     def put(self, key, value):
         "Persist an object somewhere under a given key"
@@ -76,7 +80,8 @@ class Tab(QtWebKit.QWebView):
         self.tb.addAction(container.newtab)
 
         self.urlChanged.connect(lambda u: self.url.setText(u.toString()))
-        self.urlChanged.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(i.url().toString()) for i in self.history().items()]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
+        self.urlChanged.connect(lambda u: container.history.append(unicode(u.toString())))
+        #self.url.textEdited.connect(lambda: self.url.setCompleter(QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in container.history]), caseSensitivity=QtCore.Qt.CaseInsensitive)))
         self.urlChanged.connect(lambda u: container.star.setChecked(unicode(u.toString()) in container.bookmarks) if self.amCurrent() else None)
 
         self.statusBarMessage.connect(container.sb.showMessage)
