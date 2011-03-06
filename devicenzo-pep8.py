@@ -28,7 +28,7 @@ class MainWindow(QtGui.QMainWindow):
     def currentTabChanged(self, idx):
         wb = self.tabs.widget(idx)
         if wb is None:
-            return self.close()        
+            return self.close()
         self.setWindowTitle(wb.title() or "De Vicenzo")
         for w in self.tabWidgets:
             w.hide()
