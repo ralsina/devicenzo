@@ -35,7 +35,7 @@ class MainWindow(QtGui.QMainWindow):
         v = settings.value(key)
         return json.loads(unicode(v.toString())) if v.isValid() else default
 
-    def addTab(self, url=QtCore.QUrl()):
+    def addTab(self, url=QtCore.QUrl("http://devicenzo.googlecode.com")):
         self.tabs.setCurrentIndex(self.tabs.addTab(Tab(url, self), ""))
         return self.tabs.currentWidget()
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         url = QtCore.QUrl.fromUserInput(sys.argv[1])
     else:
-        url = QtCore.QUrl('http://www.python.org')
+        url = QtCore.QUrl('http://devicenzo.googlecode.com')
     wb = MainWindow(url)
     wb.show()
     sys.exit(app.exec_())
