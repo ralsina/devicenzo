@@ -15,7 +15,7 @@ class MainWindow(QtGui.QMainWindow):
         self.sb = self.statusBar()
         self.tabWidgets = []
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage, shortcut="Ctrl+d")
-        self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=lambda: self.addTab(), shortcut="Ctrl+t")
+        self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=lambda: self.addTab().url.setFocus(), shortcut="Ctrl+t")
         self.addAction(QtGui.QAction("Full Screen", self, checkable=True, toggled=lambda v: self.showFullScreen() if v else self.showNormal(), shortcut="F11"))
         self.bookmarks = self.get("bookmarks", {})
         self.bookmarkPage()  # Load the bookmarks menu
@@ -41,7 +41,7 @@ class MainWindow(QtGui.QMainWindow):
         v = settings.value(key)
         return json.loads(unicode(v.toString())) if v.isValid() else default
 
-    def addTab(self, url=QtCore.QUrl("http://devicenzo.googlecode.com")):
+    def addTab(self, url=QtCore.QUrl("")):
         self.tabs.setCurrentIndex(self.tabs.addTab(Tab(url, self), ""))
         return self.tabs.currentWidget()
 
