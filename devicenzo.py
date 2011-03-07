@@ -25,11 +25,11 @@ class MainWindow(QtGui.QMainWindow):
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
         [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", [])]
 
-    def close(self):
+    def closeEvent(self, ev):
         self.put("history", self.history)
         self.put("cookiejar", [str(c.toRawForm()) for c in self.cookies.allCookies()])
         self.put("tabs", [unicode(self.tabs.widget(i).url.text()) for i in range(self.tabs.count())])
-        QtGui.QMainWindow.close(self)
+        return QtGui.QMainWindow.closeEvent(self, ev)
 
     def put(self, key, value):
         "Persist an object somewhere under a given key"
