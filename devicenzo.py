@@ -29,7 +29,7 @@ class MainWindow(QtGui.QMainWindow):
     def fetch(self, reply):
         destination = QtGui.QFileDialog.getSaveFileName(self, "Save File", os.path.expanduser(os.path.join('~',unicode(reply.url().path()).split('/')[-1])))
         if destination:
-            bar = QtGui.QProgressBar()
+            bar = QtGui.QProgressBar(format = '%p% - '+ os.path.basename(unicode(destination)))
             self.statusBar().addPermanentWidget(bar)
             reply.downloadProgress.connect(self.progress)
             reply.finished.connect(self.finished)
