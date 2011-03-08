@@ -125,8 +125,7 @@ class Tab(QtWebKit.QWebView):
         self.statusBarMessage.connect(container.statusBar().showMessage)
         self.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
 
-        self.search = QtGui.QLineEdit(returnPressed=lambda: self.findText(self.search.text()))
-        self.search.hide()
+        self.search = QtGui.QLineEdit(visible=False, returnPressed=lambda: self.findText(self.search.text()))
         self.showSearch = QtGui.QShortcut("Ctrl+F", self, activated=lambda: self.search.show() or self.search.setFocus())
         self.hideSearch = QtGui.QShortcut("Esc", self, activated=lambda: (self.search.hide(), self.setFocus()))
 
