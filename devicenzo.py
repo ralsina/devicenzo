@@ -23,18 +23,18 @@ class MainWindow(QtGui.QMainWindow):
         self.cookies = QtNetwork.QNetworkCookieJar()
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
         [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", [])]
-        self.bars={}
+        self.bars = {}
         self.manager = QtNetwork.QNetworkAccessManager(self)
 
     def fetch(self, reply):
-        destination = QtGui.QFileDialog.getSaveFileName(self, "Save File", os.path.expanduser(os.path.join('~',unicode(reply.url().path()).split('/')[-1])))
+        destination = QtGui.QFileDialog.getSaveFileName(self, "Save File", os.path.expanduser(os.path.join('~', unicode(reply.url().path()).split('/')[-1])))
         if destination:
-            bar = QtGui.QProgressBar(format = '%p% - '+ os.path.basename(unicode(destination)))
+            bar = QtGui.QProgressBar(format='%p% - ' + os.path.basename(unicode(destination)))
             self.statusBar().addPermanentWidget(bar)
             reply.downloadProgress.connect(self.progress)
             reply.finished.connect(self.finished)
-            self.bars[unicode(reply.url().toString())]=[bar, reply, unicode(destination)]
-                
+            self.bars[unicode(reply.url().toString())] = [bar, reply, unicode(destination)]
+
     def finished(self):
         reply = self.sender()
         url = unicode(reply.url().toString())
@@ -43,11 +43,11 @@ class MainWindow(QtGui.QMainWindow):
         del self.bars[url]
         bar.deleteLater()
         if redirURL and redirURL != url:
-            return self.fetch (redirURL, fname)
-        with open(fname,'wb') as f:
+            return self.fetch(redirURL, fname)
+        with open(fname, 'wb') as f:
             f.write(str(reply.readAll()))
-                
-    progress = lambda self, received, total: self.bars[unicode(self.sender().url().toString())][0].setValue(100.*received/total)
+
+    progress = lambda self, received, total: self.bars[unicode(self.sender().url().toString())][0].setValue(100. * received / total)
 
     def closeEvent(self, ev):
         self.put("history", self.history)
@@ -98,15 +98,13 @@ class MainWindow(QtGui.QMainWindow):
 class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
         self.container = container
-        self.pbar = QtGui.QProgressBar()
+        self.pbar = QtGui.QProgressBar(maximumWidth=120, visible=False)
         QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None))
         self.page().networkAccessManager().setCookieJar(container.cookies)
         self.page().setForwardUnsupportedContent(True)
         self.page().unsupportedContent.connect(container.fetch)
 
-        self.pbar.setMaximumWidth(120)
         container.statusBar().addPermanentWidget(self.pbar)
-        self.pbar.hide()
 
         self.tb = QtGui.QToolBar("Main Toolbar")
         for a in (QtWebKit.QWebPage.Back, QtWebKit.QWebPage.Forward, QtWebKit.QWebPage.Reload):
