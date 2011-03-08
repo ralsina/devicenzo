@@ -13,6 +13,7 @@ class MainWindow(QtGui.QMainWindow):
         self.tabs = QtGui.QTabWidget(self, tabsClosable=True, movable=True, currentChanged=self.currentTabChanged, elideMode=QtCore.Qt.ElideRight, tabCloseRequested=lambda idx: self.tabs.widget(idx).deleteLater())
         self.setCentralWidget(self.tabs)
         self.tabWidgets = []
+        self.bars = {}
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage, shortcut="Ctrl+d")
         self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=lambda: self.addTab().url.setFocus(), shortcut="Ctrl+t")
         self.addAction(QtGui.QAction("Full Screen", self, checkable=True, toggled=lambda v: self.showFullScreen() if v else self.showNormal(), shortcut="F11"))
@@ -22,9 +23,13 @@ class MainWindow(QtGui.QMainWindow):
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
         self.cookies = QtNetwork.QNetworkCookieJar()
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
-        [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", [])]
-        self.bars = {}
         self.manager = QtNetwork.QNetworkAccessManager(self)
+
+        # Proxy support
+        proxy_url = QtCore.QUrl(os.environ.get('http_proxy',''))
+        self.manager.setProxy(QtNetwork.QNetworkProxy(QtNetwork.QNetworkProxy.HttpProxy if unicode(proxy_url.scheme()).startswith('http') else QtNetwork.QNetworkProxy.Socks5Proxy, proxy_url.host(), proxy_url.port(), proxy_url.userName(), proxy_url.password())) if 'http_proxy' in os.environ else None
+        
+        [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", [])]
 
     def fetch(self, reply):
         destination = QtGui.QFileDialog.getSaveFileName(self, "Save File", os.path.expanduser(os.path.join('~', unicode(reply.url().path()).split('/')[-1])))
