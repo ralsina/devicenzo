@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 "A web browser that will never exceed 128 lines of code. (not counting blanks)"
 
-import sys, json
+import sys, os, json
 from PyQt4 import QtGui, QtCore, QtWebKit, QtNetwork
 
 settings = QtCore.QSettings("ralsina", "devicenzo")
@@ -12,7 +12,6 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.tabs = QtGui.QTabWidget(self, tabsClosable=True, movable=True, currentChanged=self.currentTabChanged, elideMode=QtCore.Qt.ElideRight, tabCloseRequested=lambda idx: self.tabs.widget(idx).deleteLater())
         self.setCentralWidget(self.tabs)
-        self.sb = self.statusBar()
         self.tabWidgets = []
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage, shortcut="Ctrl+d")
         self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=lambda: self.addTab().url.setFocus(), shortcut="Ctrl+t")
@@ -24,6 +23,31 @@ class MainWindow(QtGui.QMainWindow):
         self.cookies = QtNetwork.QNetworkCookieJar()
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
         [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", [])]
+        self.bars={}
+        self.manager = QtNetwork.QNetworkAccessManager(self)
+
+    def fetch(self, reply):
+        reply.downloadProgress.connect(self.progress)
+        reply.finished.connect(self.finished)
+        bar = QtGui.QProgressBar()
+        self.statusBar().addPermanentWidget(bar)
+        destination = QtGui.QFileDialog.getSaveFileName(self, "Save File", os.path.expanduser(os.path.join('~',unicode(reply.url().path()).split('/')[-1])))
+        if destination:
+            self.bars[unicode(reply.url().toString())]=[bar, reply, destination]
+                
+    def finished(self):
+        reply = self.sender()
+        url = unicode(reply.url().toString())
+        bar, _, fname = self.bars[url]
+        redirURL = unicode(reply.attribute(QtNetwork.QNetworkRequest.RedirectionTargetAttribute).toString())
+        del self.bars[url]
+        bar.deleteLater()
+        if redirURL and redirURL != url:
+            return self.fetch (redirURL, fname)
+        with open(fname,'wb') as f:
+            f.write(str(reply.readAll()))
+                
+    progress = lambda self, received, total: self.bars[unicode(self.sender().url().toString())][0].setValue(100.*received/total)
 
     def closeEvent(self, ev):
         self.put("history", self.history)
@@ -77,9 +101,11 @@ class Tab(QtWebKit.QWebView):
         self.pbar = QtGui.QProgressBar()
         QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None))
         self.page().networkAccessManager().setCookieJar(container.cookies)
+        self.page().setForwardUnsupportedContent(True)
+        self.page().unsupportedContent.connect(container.fetch)
 
         self.pbar.setMaximumWidth(120)
-        container.sb.addPermanentWidget(self.pbar)
+        container.statusBar().addPermanentWidget(self.pbar)
         self.pbar.hide()
 
         self.tb = QtGui.QToolBar("Main Toolbar")
@@ -97,8 +123,8 @@ class Tab(QtWebKit.QWebView):
         self.urlChanged.connect(lambda u: container.addToHistory(unicode(u.toString())))
         self.urlChanged.connect(lambda u: container.star.setChecked(unicode(u.toString()) in container.bookmarks) if self.amCurrent() else None)
 
-        self.statusBarMessage.connect(container.sb.showMessage)
-        self.page().linkHovered.connect(lambda l: container.sb.showMessage(l, 3000))
+        self.statusBarMessage.connect(container.statusBar().showMessage)
+        self.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
 
         self.search = QtGui.QLineEdit(returnPressed=lambda: self.findText(self.search.text()))
         self.search.hide()
@@ -116,14 +142,13 @@ class Tab(QtWebKit.QWebView):
         self.do_print = QtGui.QShortcut("Ctrl+p", self, activated=self.previewer.exec_)
         self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
 
-        container.sb.addPermanentWidget(self.search)
+        container.statusBar().addPermanentWidget(self.search)
         self.load(url)
 
     amCurrent = lambda self: self.container.tabs.currentWidget() == self
 
     def createWindow(self, windowType):
         return self.container.addTab()
-
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
