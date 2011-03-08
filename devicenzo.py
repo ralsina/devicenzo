@@ -23,12 +23,11 @@ class MainWindow(QtGui.QMainWindow):
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
         self.cookies = QtNetwork.QNetworkCookieJar()
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
-        self.manager = QtNetwork.QNetworkAccessManager(self)
 
         # Proxy support
-        proxy_url = QtCore.QUrl(os.environ.get('http_proxy',''))
-        self.manager.setProxy(QtNetwork.QNetworkProxy(QtNetwork.QNetworkProxy.HttpProxy if unicode(proxy_url.scheme()).startswith('http') else QtNetwork.QNetworkProxy.Socks5Proxy, proxy_url.host(), proxy_url.port(), proxy_url.userName(), proxy_url.password())) if 'http_proxy' in os.environ else None
-        
+        proxy_url = QtCore.QUrl(os.environ.get('http_proxy', ''))
+        QtNetwork.QNetworkProxy.setApplicationProxy(QtNetwork.QNetworkProxy(QtNetwork.QNetworkProxy.HttpProxy if unicode(proxy_url.scheme()).startswith('http') else QtNetwork.QNetworkProxy.Socks5Proxy, proxy_url.host(), proxy_url.port(), proxy_url.userName(), proxy_url.password())) if 'http_proxy' in os.environ else None
+
         [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", [])]
 
     def fetch(self, reply):
