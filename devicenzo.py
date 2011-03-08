@@ -107,8 +107,9 @@ class Tab(QtWebKit.QWebView):
         container.statusBar().addPermanentWidget(self.pbar)
 
         self.tb = QtGui.QToolBar("Main Toolbar")
-        for a in (QtWebKit.QWebPage.Back, QtWebKit.QWebPage.Forward, QtWebKit.QWebPage.Reload):
+        for a, sc in [[QtWebKit.QWebPage.Back, "Alt+Left"], [QtWebKit.QWebPage.Forward, "Alt+Right"], [QtWebKit.QWebPage.Reload, "Ctrl+r"]]:
             self.tb.addAction(self.pageAction(a))
+            self.pageAction(a).setShortcut(sc)
 
         self.url = QtGui.QLineEdit(returnPressed=lambda: self.setUrl(QtCore.QUrl.fromUserInput(self.url.text())))
         self.url.setCompleter(container.completer)
