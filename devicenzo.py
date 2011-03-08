@@ -27,13 +27,13 @@ class MainWindow(QtGui.QMainWindow):
         self.manager = QtNetwork.QNetworkAccessManager(self)
 
     def fetch(self, reply):
-        reply.downloadProgress.connect(self.progress)
-        reply.finished.connect(self.finished)
-        bar = QtGui.QProgressBar()
-        self.statusBar().addPermanentWidget(bar)
         destination = QtGui.QFileDialog.getSaveFileName(self, "Save File", os.path.expanduser(os.path.join('~',unicode(reply.url().path()).split('/')[-1])))
         if destination:
-            self.bars[unicode(reply.url().toString())]=[bar, reply, destination]
+            bar = QtGui.QProgressBar()
+            self.statusBar().addPermanentWidget(bar)
+            reply.downloadProgress.connect(self.progress)
+            reply.finished.connect(self.finished)
+            self.bars[unicode(reply.url().toString())]=[bar, reply, unicode(destination)]
                 
     def finished(self):
         reply = self.sender()
