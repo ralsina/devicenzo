@@ -128,7 +128,7 @@ class MainWindow(QtGui.QMainWindow):
         self.star.setMenu(QtGui.QMenu())
         [self.star.menu().addAction(QtGui.QAction(title,
             self,
-            activated=lambda u=QtCore.QUrl(url):
+            triggered=lambda u=QtCore.QUrl(url):
                 self.tabs.currentWidget().load(u)))
             for url, title in self.bookmarks.items()]
         self.put('bookmarks', self.bookmarks)

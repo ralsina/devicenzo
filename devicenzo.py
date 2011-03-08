@@ -87,7 +87,7 @@ class MainWindow(QtGui.QMainWindow):
         elif v is not None:
             del (self.bookmarks[unicode(self.tabs.currentWidget().url.text())])
         self.star.setMenu(QtGui.QMenu())
-        [self.star.menu().addAction(QtGui.QAction(title, self, activated=lambda u=QtCore.QUrl(url): self.tabs.currentWidget().load(u))) for url, title in self.bookmarks.items()]
+        [self.star.menu().addAction(QtGui.QAction(title, self, triggered=lambda u=QtCore.QUrl(url): self.tabs.currentWidget().load(u))) for url, title in self.bookmarks.items()]
         self.put('bookmarks', self.bookmarks)
 
     def addToHistory(self, url):
