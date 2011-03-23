@@ -82,9 +82,6 @@ class MainWindow(QtGui.QMainWindow):
         for w in self.tabWidgets:
             w.hide()
         self.tabWidgets = [tab.pbar, tab.search]
-        #self.addToolBar(wb.tb)
-        #for w in self.tabWidgets[:-2]:
-            #w.show()
 
     def bookmarkPage(self, v=None):
         if v and v is not None:
