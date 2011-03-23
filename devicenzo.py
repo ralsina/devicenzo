@@ -34,18 +34,19 @@ class MainWindow(QtGui.QMainWindow):
         destination = QtGui.QFileDialog.getSaveFileName(self, "Save File", os.path.expanduser(os.path.join('~', unicode(reply.url().path()).split('/')[-1])))
         if destination:
             bar = QtGui.QProgressBar(format='%p% - ' + os.path.basename(unicode(destination)))
+            cancel = QtGui.QToolButton(bar, icon=QtGui.QIcon.fromTheme("process-stop"), clicked=reply.abort)
             self.statusBar().addPermanentWidget(bar)
             reply.downloadProgress.connect(self.progress)
             reply.finished.connect(self.finished)
-            self.bars[unicode(reply.url().toString())] = [bar, reply, unicode(destination)]
+            self.bars[unicode(reply.url().toString())] = [bar, reply, unicode(destination), cancel]
 
     def finished(self):
-        reply = self.sender()
-        url = unicode(reply.url().toString())
-        bar, _, fname = self.bars[url]
+        url = unicode(self.sender().url().toString())
+        bar, reply, fname, cancel = self.bars[url]
         redirURL = unicode(reply.attribute(QtNetwork.QNetworkRequest.RedirectionTargetAttribute).toString())
         del self.bars[url]
         bar.deleteLater()
+        cancel.deleteLater()
         if redirURL and redirURL != url:
             return self.fetch(redirURL, fname)
         with open(fname, 'wb') as f:
