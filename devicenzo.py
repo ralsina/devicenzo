@@ -104,10 +104,11 @@ class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
         self.container = container
         self.pbar = QtGui.QProgressBar(maximumWidth=120, visible=False)
-        QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None), iconChanged=lambda: container.tabs.setTabIcon(container.tabs.indexOf(self), self.icon()), statusBarMessage = container.statusBar().showMessage)
+        QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None), iconChanged=lambda: container.tabs.setTabIcon(container.tabs.indexOf(self), self.icon()), statusBarMessage=container.statusBar().showMessage)
         self.page().networkAccessManager().setCookieJar(container.cookies)
         self.page().setForwardUnsupportedContent(True)
         self.page().unsupportedContent.connect(container.fetch)
+        self.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
 
         container.statusBar().addPermanentWidget(self.pbar)
 
@@ -150,8 +151,7 @@ class Tab(QtWebKit.QWebView):
 
     amCurrent = lambda self: self.container.tabs.currentWidget() == self
 
-    def createWindow(self, windowType):
-        return self.container.addTab()
+    createWindow = lambda self, windowType: self.container.addTab()
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
