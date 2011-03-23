@@ -21,7 +21,7 @@ class MainWindow(QtGui.QMainWindow):
         self.bookmarkPage()  # Load the bookmarks menu
         self.history = self.get("history", []) + self.bookmarks.keys()
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
-        self.cookies = QtNetwork.QNetworkCookieJar(self)
+        self.cookies = QtNetwork.QNetworkCookieJar(QtCore.QCoreApplication.instance())
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
 
         # Proxy support
@@ -75,16 +75,16 @@ class MainWindow(QtGui.QMainWindow):
         return self.tabs.currentWidget()
 
     def currentTabChanged(self, idx):
-        wb = self.tabs.widget(idx)
-        if wb is None:
+        tab = self.tabs.widget(idx)
+        if tab is None:
             return self.close()
-        self.setWindowTitle(wb.title() or "De Vicenzo")
+        self.setWindowTitle(tab.wb.title() or "De Vicenzo")
         for w in self.tabWidgets:
             w.hide()
-        self.tabWidgets = [wb.tb, wb.pbar, wb.search]
-        self.addToolBar(wb.tb)
-        for w in self.tabWidgets[:-2]:
-            w.show()
+        self.tabWidgets = [tab.pbar, tab.search]
+        #self.addToolBar(wb.tb)
+        #for w in self.tabWidgets[:-2]:
+            #w.show()
 
     def bookmarkPage(self, v=None):
         if v and v is not None:
@@ -100,53 +100,57 @@ class MainWindow(QtGui.QMainWindow):
         self.completer.setModel(QtGui.QStringListModel(list(set(self.bookmarks.keys() + self.history))))
 
 
-class Tab(QtWebKit.QWebView):
+class Tab(QtGui.QWidget):
     def __init__(self, url, container):
         self.container = container
+        QtGui.QWidget.__init__(self)
         self.pbar = QtGui.QProgressBar(maximumWidth=120, visible=False)
-        QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None), iconChanged=lambda: container.tabs.setTabIcon(container.tabs.indexOf(self), self.icon()), statusBarMessage=container.statusBar().showMessage)
-        self.page().networkAccessManager().setCookieJar(container.cookies)
-        self.page().setForwardUnsupportedContent(True)
-        self.page().unsupportedContent.connect(container.fetch)
-        self.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
+        self.wb = QtWebKit.QWebView(loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None), iconChanged=lambda: container.tabs.setTabIcon(container.tabs.indexOf(self), self.wb.icon()), statusBarMessage=container.statusBar().showMessage)
+        self.wb.page().networkAccessManager().setCookieJar(container.cookies)
+        self.wb.page().setForwardUnsupportedContent(True)
+        self.wb.page().unsupportedContent.connect(container.fetch)
+        self.wb.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
 
         container.statusBar().addPermanentWidget(self.pbar)
 
-        self.tb = QtGui.QToolBar("Main Toolbar")
+        self.setLayout(QtGui.QVBoxLayout())
+        self.tb = QtGui.QToolBar("Main Toolbar", self)
+        self.layout().addWidget(self.tb)
+        self.layout().addWidget(self.wb)
         for a, sc in [[QtWebKit.QWebPage.Back, "Alt+Left"], [QtWebKit.QWebPage.Forward, "Alt+Right"], [QtWebKit.QWebPage.Reload, "Ctrl+r"]]:
-            self.tb.addAction(self.pageAction(a))
-            self.pageAction(a).setShortcut(sc)
+            self.tb.addAction(self.wb.pageAction(a))
+            self.wb.pageAction(a).setShortcut(sc)
 
-        self.url = QtGui.QLineEdit(returnPressed=lambda: self.setUrl(QtCore.QUrl.fromUserInput(self.url.text())))
+        self.url = QtGui.QLineEdit(returnPressed=lambda: self.wb.setUrl(QtCore.QUrl.fromUserInput(self.url.text())))
         self.url.setCompleter(container.completer)
         self.tb.addWidget(self.url)
         self.tb.addAction(container.star)
 
         # FIXME: if I was seriously golfing, all of these can go in a single lambda
-        self.urlChanged.connect(lambda u: self.url.setText(u.toString()))
-        self.urlChanged.connect(lambda u: container.addToHistory(unicode(u.toString())))
-        self.urlChanged.connect(lambda u: container.star.setChecked(unicode(u.toString()) in container.bookmarks) if self.amCurrent() else None)
+        self.wb.urlChanged.connect(lambda u: self.url.setText(u.toString()))
+        self.wb.urlChanged.connect(lambda u: container.addToHistory(unicode(u.toString())))
+        self.wb.urlChanged.connect(lambda u: container.star.setChecked(unicode(u.toString()) in container.bookmarks) if self.amCurrent() else None)
 
-        self.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
+        self.wb.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
 
-        self.search = QtGui.QLineEdit(visible=False, returnPressed=lambda: self.findText(self.search.text()))
+        self.search = QtGui.QLineEdit(visible=False, returnPressed=lambda: self.wb.findText(self.search.text()))
         self.showSearch = QtGui.QShortcut("Ctrl+F", self, activated=lambda: self.search.show() or self.search.setFocus())
         self.hideSearch = QtGui.QShortcut("Esc", self, activated=lambda: (self.search.hide(), self.setFocus()))
 
         self.do_close = QtGui.QShortcut("Ctrl+W", self, activated=lambda: container.tabs.removeTab(container.tabs.indexOf(self)))
         self.do_quit = QtGui.QShortcut("Ctrl+q", self, activated=lambda: container.close())
-        self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda: self.setZoomFactor(self.zoomFactor() + 0.2))
-        self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda: self.setZoomFactor(self.zoomFactor() - 0.2))
-        self.zoomOne = QtGui.QShortcut("Ctrl+0", self, activated=lambda: self.setZoomFactor(1))
+        self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda: self.wb.setZoomFactor(self.zoomFactor() + 0.2))
+        self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda: self.wb.setZoomFactor(self.zoomFactor() - 0.2))
+        self.zoomOne = QtGui.QShortcut("Ctrl+0", self, activated=lambda: self.wb.setZoomFactor(1))
         self.urlFocus = QtGui.QShortcut("Ctrl+l", self, activated=self.url.setFocus)
 
-        self.previewer = QtGui.QPrintPreviewDialog(paintRequested=self.print_)
+        self.previewer = QtGui.QPrintPreviewDialog(paintRequested=self.wb.print_)
         self.do_print = QtGui.QShortcut("Ctrl+p", self, activated=self.previewer.exec_)
-        self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
-        self.settings().setIconDatabasePath(tempfile.mkdtemp())
+        self.wb.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
+        self.wb.settings().setIconDatabasePath(tempfile.mkdtemp())
 
         container.statusBar().addPermanentWidget(self.search)
-        self.load(url)
+        self.wb.load(url)
 
     amCurrent = lambda self: self.container.tabs.currentWidget() == self
 
