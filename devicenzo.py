@@ -12,7 +12,6 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.tabs = QtGui.QTabWidget(self, tabsClosable=True, movable=True, currentChanged=self.currentTabChanged, elideMode=QtCore.Qt.ElideRight, tabCloseRequested=lambda idx: self.tabs.widget(idx).deleteLater())
         self.setCentralWidget(self.tabs)
-        self.tabWidgets = []
         self.bars = {}
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage, shortcut="Ctrl+d")
         self.tabs.setCornerWidget(QtGui.QToolButton(self, text="New Tab", icon=QtGui.QIcon.fromTheme("document-new"), clicked=lambda: self.addTab().url.setFocus(), shortcut="Ctrl+t"))
@@ -21,8 +20,12 @@ class MainWindow(QtGui.QMainWindow):
         self.bookmarkPage()  # Load the bookmarks menu
         self.history = self.get("history", []) + self.bookmarks.keys()
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
+
+        # Use a app-wide, persistent cookiejar
         self.cookies = QtNetwork.QNetworkCookieJar(QtCore.QCoreApplication.instance())
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
+
+        # Downloads bar at the bottom of the window
         self.downloads = QtGui.QToolBar("Downloads")
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.downloads)
 
