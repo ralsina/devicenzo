@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 "A web browser that will never exceed 128 lines of code. (not counting blanks)"
 
 import sys, os, json, tempfile
