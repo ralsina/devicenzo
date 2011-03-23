@@ -15,7 +15,7 @@ class MainWindow(QtGui.QMainWindow):
         self.tabWidgets = []
         self.bars = {}
         self.star = QtGui.QAction(QtGui.QIcon.fromTheme("emblem-favorite"), "Bookmark", self, checkable=True, triggered=self.bookmarkPage, shortcut="Ctrl+d")
-        self.newtab = QtGui.QAction(QtGui.QIcon.fromTheme("document-new"), "New Tab", self, triggered=lambda: self.addTab().url.setFocus(), shortcut="Ctrl+t")
+        self.tabs.setCornerWidget(QtGui.QToolButton(self, text="New Tab", icon=QtGui.QIcon.fromTheme("document-new"), clicked=lambda: self.addTab().url.setFocus(), shortcut="Ctrl+t"))
         self.addAction(QtGui.QAction("Full Screen", self, checkable=True, toggled=lambda v: self.showFullScreen() if v else self.showNormal(), shortcut="F11"))
         self.bookmarks = self.get("bookmarks", {})
         self.bookmarkPage()  # Load the bookmarks menu
@@ -121,7 +121,6 @@ class Tab(QtWebKit.QWebView):
         self.url.setCompleter(container.completer)
         self.tb.addWidget(self.url)
         self.tb.addAction(container.star)
-        self.tb.addAction(container.newtab)
 
         # FIXME: if I was seriously golfing, all of these can go in a single lambda
         self.urlChanged.connect(lambda u: self.url.setText(u.toString()))
