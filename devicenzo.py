@@ -75,13 +75,9 @@ class MainWindow(QtGui.QMainWindow):
         return self.tabs.currentWidget()
 
     def currentTabChanged(self, idx):
-        tab = self.tabs.widget(idx)
-        if tab is None:
+        if self.tabs.widget(idx) is None:
             return self.close()
-        self.setWindowTitle(tab.wb.title() or "De Vicenzo")
-        for w in self.tabWidgets:
-            w.hide()
-        self.tabWidgets = [tab.pbar, tab.search]
+        self.setWindowTitle(self.tabs.widget(idx).wb.title() or "De Vicenzo")
 
     def bookmarkPage(self, v=None):
         if v and v is not None:
@@ -130,9 +126,14 @@ class Tab(QtGui.QWidget):
 
         self.wb.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
 
-        self.search = QtGui.QLineEdit(visible=False, returnPressed=lambda: self.wb.findText(self.search.text()))
+        self.search = QtGui.QLineEdit(visible=False, maximumWidth=200, returnPressed=lambda: self.wb.findText(self.search.text()), textChanged=lambda: self.wb.findText(self.search.text()))
         self.showSearch = QtGui.QShortcut("Ctrl+F", self, activated=lambda: self.search.show() or self.search.setFocus())
         self.hideSearch = QtGui.QShortcut("Esc", self, activated=lambda: (self.search.hide(), self.setFocus()))
+
+        self.wb.setLayout(QtGui.QVBoxLayout())
+        self.wb.layout().addWidget(self.search, 0, QtCore.Qt.AlignRight)
+        self.wb.layout().addStretch()
+        self.wb.layout().addWidget(self.pbar, 0, QtCore.Qt.AlignRight)
 
         self.do_close = QtGui.QShortcut("Ctrl+W", self, activated=lambda: container.tabs.removeTab(container.tabs.indexOf(self)))
         self.do_quit = QtGui.QShortcut("Ctrl+q", self, activated=lambda: container.close())
@@ -146,7 +147,6 @@ class Tab(QtGui.QWidget):
         self.wb.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         self.wb.settings().setIconDatabasePath(tempfile.mkdtemp())
 
-        container.statusBar().addPermanentWidget(self.search)
         self.wb.load(url)
 
     amCurrent = lambda self: self.container.tabs.currentWidget() == self
