@@ -110,6 +110,7 @@ class Tab(QtGui.QWidget):
         self.wb.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
 
         self.setLayout(QtGui.QVBoxLayout())
+        self.layout().setSpacing(0)
         self.tb = QtGui.QToolBar("Main Toolbar", self)
         self.layout().addWidget(self.tb)
         self.layout().addWidget(self.wb)
@@ -138,6 +139,7 @@ class Tab(QtGui.QWidget):
         self.wb.layout().addWidget(self.search, 0, QtCore.Qt.AlignRight)
         self.wb.layout().addStretch()
         self.wb.layout().addWidget(self.pbar, 0, QtCore.Qt.AlignRight)
+        self.wb.layout().setContentsMargins(3, 3, 25, 3)
 
         self.do_close = QtGui.QShortcut("Ctrl+W", self, activated=lambda: container.tabs.removeTab(container.tabs.indexOf(self)))
         self.do_quit = QtGui.QShortcut("Ctrl+q", self, activated=lambda: container.close())
