@@ -141,8 +141,8 @@ class Tab(QtGui.QWidget):
 
         self.do_close = QtGui.QShortcut("Ctrl+W", self, activated=lambda: container.tabs.removeTab(container.tabs.indexOf(self)))
         self.do_quit = QtGui.QShortcut("Ctrl+q", self, activated=lambda: container.close())
-        self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda: self.wb.setZoomFactor(self.zoomFactor() + 0.2))
-        self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda: self.wb.setZoomFactor(self.zoomFactor() - 0.2))
+        self.zoomIn = QtGui.QShortcut("Ctrl++", self, activated=lambda: self.wb.setZoomFactor(self.wb.zoomFactor() + 0.2))
+        self.zoomOut = QtGui.QShortcut("Ctrl+-", self, activated=lambda: self.wb.setZoomFactor(self.wb.zoomFactor() - 0.2))
         self.zoomOne = QtGui.QShortcut("Ctrl+0", self, activated=lambda: self.wb.setZoomFactor(1))
         self.urlFocus = QtGui.QShortcut("Ctrl+l", self, activated=self.url.setFocus)
 
