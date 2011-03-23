@@ -23,6 +23,8 @@ class MainWindow(QtGui.QMainWindow):
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
         self.cookies = QtNetwork.QNetworkCookieJar(QtCore.QCoreApplication.instance())
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
+        self.downloads = QtGui.QToolBar("Downloads")
+        self.addToolBar(QtCore.Qt.BottomToolBarArea, self.downloads)
 
         # Proxy support
         proxy_url = QtCore.QUrl(os.environ.get('http_proxy', ''))
@@ -35,7 +37,7 @@ class MainWindow(QtGui.QMainWindow):
         if destination:
             bar = QtGui.QProgressBar(format='%p% - ' + os.path.basename(unicode(destination)))
             cancel = QtGui.QToolButton(bar, icon=QtGui.QIcon.fromTheme("process-stop"), clicked=reply.abort)
-            self.statusBar().addPermanentWidget(bar)
+            self.downloads.addWidget(bar)
             reply.downloadProgress.connect(self.progress)
             reply.finished.connect(self.finished)
             self.bars[unicode(reply.url().toString())] = [bar, reply, unicode(destination), cancel]
@@ -98,13 +100,11 @@ class Tab(QtGui.QWidget):
         self.container = container
         QtGui.QWidget.__init__(self)
         self.pbar = QtGui.QProgressBar(maximumWidth=120, visible=False)
-        self.wb = QtWebKit.QWebView(loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None), iconChanged=lambda: container.tabs.setTabIcon(container.tabs.indexOf(self), self.wb.icon()), statusBarMessage=container.statusBar().showMessage)
+        self.wb = QtWebKit.QWebView(loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None), iconChanged=lambda: container.tabs.setTabIcon(container.tabs.indexOf(self), self.wb.icon()))
         self.wb.page().networkAccessManager().setCookieJar(container.cookies)
         self.wb.page().setForwardUnsupportedContent(True)
         self.wb.page().unsupportedContent.connect(container.fetch)
         self.wb.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
-
-        container.statusBar().addPermanentWidget(self.pbar)
 
         self.setLayout(QtGui.QVBoxLayout())
         self.tb = QtGui.QToolBar("Main Toolbar", self)
@@ -124,7 +124,8 @@ class Tab(QtGui.QWidget):
         self.wb.urlChanged.connect(lambda u: container.addToHistory(unicode(u.toString())))
         self.wb.urlChanged.connect(lambda u: container.star.setChecked(unicode(u.toString()) in container.bookmarks) if self.amCurrent() else None)
 
-        self.wb.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
+        # FIXME: do this using a tooltip
+        #self.wb.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
 
         self.search = QtGui.QLineEdit(visible=False, maximumWidth=200, returnPressed=lambda: self.wb.findText(self.search.text()), textChanged=lambda: self.wb.findText(self.search.text()))
         self.showSearch = QtGui.QShortcut("Ctrl+F", self, activated=lambda: self.search.show() or self.search.setFocus())
