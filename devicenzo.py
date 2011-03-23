@@ -21,7 +21,7 @@ class MainWindow(QtGui.QMainWindow):
         self.bookmarkPage()  # Load the bookmarks menu
         self.history = self.get("history", []) + self.bookmarks.keys()
         self.completer = QtGui.QCompleter(QtCore.QStringList([QtCore.QString(u) for u in self.history]))
-        self.cookies = QtNetwork.QNetworkCookieJar()
+        self.cookies = QtNetwork.QNetworkCookieJar(self)
         self.cookies.setAllCookies([QtNetwork.QNetworkCookie.parseCookies(c)[0] for c in self.get("cookiejar", [])])
 
         # Proxy support
