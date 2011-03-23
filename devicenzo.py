@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 "A web browser that will never exceed 128 lines of code. (not counting blanks)"
 
-import sys, os, json
+import sys, os, json, tempfile
 from PyQt4 import QtGui, QtCore, QtWebKit, QtNetwork
 
 settings = QtCore.QSettings("ralsina", "devicenzo")
@@ -104,7 +104,7 @@ class Tab(QtWebKit.QWebView):
     def __init__(self, url, container):
         self.container = container
         self.pbar = QtGui.QProgressBar(maximumWidth=120, visible=False)
-        QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None))
+        QtWebKit.QWebView.__init__(self, loadProgress=lambda v: (self.pbar.show(), self.pbar.setValue(v)) if self.amCurrent() else None, loadFinished=self.pbar.hide, loadStarted=lambda: self.pbar.show() if self.amCurrent() else None, titleChanged=lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t) or (container.setWindowTitle(t) if self.amCurrent() else None), iconChanged=lambda: container.tabs.setTabIcon(container.tabs.indexOf(self), self.icon()), statusBarMessage = container.statusBar().showMessage)
         self.page().networkAccessManager().setCookieJar(container.cookies)
         self.page().setForwardUnsupportedContent(True)
         self.page().unsupportedContent.connect(container.fetch)
@@ -127,7 +127,6 @@ class Tab(QtWebKit.QWebView):
         self.urlChanged.connect(lambda u: container.addToHistory(unicode(u.toString())))
         self.urlChanged.connect(lambda u: container.star.setChecked(unicode(u.toString()) in container.bookmarks) if self.amCurrent() else None)
 
-        self.statusBarMessage.connect(container.statusBar().showMessage)
         self.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
 
         self.search = QtGui.QLineEdit(visible=False, returnPressed=lambda: self.findText(self.search.text()))
@@ -144,6 +143,7 @@ class Tab(QtWebKit.QWebView):
         self.previewer = QtGui.QPrintPreviewDialog(paintRequested=self.print_)
         self.do_print = QtGui.QShortcut("Ctrl+p", self, activated=self.previewer.exec_)
         self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
+        self.settings().setIconDatabasePath(tempfile.mkdtemp())
 
         container.statusBar().addPermanentWidget(self.search)
         self.load(url)
