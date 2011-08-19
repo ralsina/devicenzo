@@ -86,7 +86,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def bookmarkPage(self, v=None):
         if v and v is not None:
-            self.bookmarks[unicode(self.tabs.currentWidget().url.text())] = unicode(self.tabs.currentWidget().title())
+            self.bookmarks[unicode(self.tabs.currentWidget().url.text())] = unicode(self.tabs.currentWidget().wb.title())
         elif v is not None:
             del (self.bookmarks[unicode(self.tabs.currentWidget().url.text())])
         self.star.setMenu(QtGui.QMenu())
