@@ -109,8 +109,8 @@ class Tab(QtGui.QWidget):
         self.wb.page().unsupportedContent.connect(container.fetch)
         self.wb.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
 
-        self.setLayout(QtGui.QVBoxLayout())
-        self.layout().setSpacing(0)
+        self.setLayout(QtGui.QVBoxLayout(spacing=0))
+        self.layout().setContentsMargins(0, 0, 0, 0)
         self.tb = QtGui.QToolBar("Main Toolbar", self)
         self.layout().addWidget(self.tb)
         self.layout().addWidget(self.wb)
@@ -135,7 +135,7 @@ class Tab(QtGui.QWidget):
         self.showSearch = QtGui.QShortcut("Ctrl+F", self, activated=lambda: self.search.show() or self.search.setFocus())
         self.hideSearch = QtGui.QShortcut("Esc", self, activated=lambda: (self.search.hide(), self.setFocus()))
 
-        self.wb.setLayout(QtGui.QVBoxLayout())
+        self.wb.setLayout(QtGui.QVBoxLayout(spacing=0))
         self.wb.layout().addWidget(self.search, 0, QtCore.Qt.AlignRight)
         self.wb.layout().addStretch()
         self.wb.layout().addWidget(self.pbar, 0, QtCore.Qt.AlignRight)
