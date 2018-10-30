@@ -217,9 +217,9 @@ class Tab(QtWidgets.QWidget):
         layout.activate()
         self.setLayout(layout)
         for a, sc in [
-            [QtWebEngineWidgets.QWebEnginePage.Back, "Alt+Left"],
-            [QtWebEngineWidgets.QWebEnginePage.Forward, "Alt+Right"],
-            [QtWebEngineWidgets.QWebEnginePage.Reload, "Ctrl+r"],
+            [QtWebEngineWidgets.QWebEnginePage.Back, QtGui.QKeySequence.Back],
+            [QtWebEngineWidgets.QWebEnginePage.Forward, QtGui.QKeySequence.Forward],
+            [QtWebEngineWidgets.QWebEnginePage.Reload, QtGui.QKeySequence.Refresh],
         ]:
             self.tb.addAction(self.web_view.pageAction(a))
             self.web_view.pageAction(a).setShortcut(sc)
