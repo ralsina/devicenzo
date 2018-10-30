@@ -37,7 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 text="New Tab",
                 icon=QtGui.QIcon.fromTheme("document-new"),
                 clicked=lambda: self.addTab().url.setFocus(),
-                shortcut="Ctrl+t",
+                shortcut=QtGui.QKeySequence.AddTab,
             )
         )
         self.full_screen_action = QtWidgets.QAction(
@@ -116,13 +116,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.tabs.widget(idx) is None:
             return self.close()
 
-        self.setWindowTitle(self.tabs.widget(idx).wb.title() or "De Vicenzo")
+        self.setWindowTitle(self.tabs.widget(idx).web_view.title() or "De Vicenzo")
 
     def bookmarkPage(self, v=None):
         if v and v is not None:
             self.bookmarks[
                 self.tabs.currentWidget().url.text()
-            ] = self.tabs.currentWidget().wb.title()
+            ] = self.tabs.currentWidget().web_view.title()
         elif v is not None:
             del (self.bookmarks[self.tabs.currentWidget().url.text()])
         self.star_action.setMenu(QtWidgets.QMenu())
@@ -176,9 +176,6 @@ class Tab(QtWidgets.QWidget):
                 container.tabs.indexOf(self), self.web_view.icon()
             )
         )
-        # self.wb.page().setForwardUnsupportedContent(True)
-        # self.wb.page().unsupportedContent.connect(container.fetch)
-        # self.wb.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
         self.tb = QtWidgets.QToolBar("Main Toolbar", self)
 
         layout = QtWidgets.QVBoxLayout()
@@ -223,7 +220,6 @@ class Tab(QtWidgets.QWidget):
             ) if self.amCurrent() else None
         )
 
-        # FIXME: do this using a tooltip
         self.web_view.page().linkHovered.connect(
             lambda l: container.statusBar().showMessage(l, 3000)
         )
@@ -258,10 +254,10 @@ class Tab(QtWidgets.QWidget):
         )
         self.urlFocus = QtWidgets.QShortcut("Ctrl+l", self, activated=self.url.setFocus)
 
-        # self.previewer = QtWidgets.QPrintPreviewDialog(paintRequested=self.wb.print_)
+        # self.previewer = QtWidgets.QPrintPreviewDialog(paintRequested=self.web_view.print_)
         # self.do_print = QtWidgets.QShortcut("Ctrl+p", self, activated=self.previewer.exec_)
-        # self.wb.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
-        # self.wb.settings().setIconDatabasePath(tempfile.mkdtemp())
+        # self.web_view.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
+        # self.web_view.settings().setIconDatabasePath(tempfile.mkdtemp())
 
         self.web_view.load(url)
 
