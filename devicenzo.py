@@ -40,9 +40,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 shortcut="Ctrl+t",
             )
         )
-        # XXX: Does full screen work?
         self.full_screen_action = QtWidgets.QAction(
-            "Full Screen", self, checkable=True, shortcut="F11"
+            "Full Screen", self, checkable=True, shortcut=QtGui.QKeySequence.FullScreen
         )
         self.full_screen_action.toggled.connect(
             lambda v: self.showFullScreen() if v else self.showNormal()
