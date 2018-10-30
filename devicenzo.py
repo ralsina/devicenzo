@@ -245,12 +245,12 @@ class Tab(QtWidgets.QWidget):
             lambda l: container.statusBar().showMessage(l, 3000)
         )
 
-        # self.search = QtWidgets.QLineEdit(visible=False, maximumWidth=200, returnPressed=lambda: self.wb.findText(self.search.text()), textChanged=lambda: self.wb.findText(self.search.text()))
         self.search = QtWidgets.QLineEdit(visible=False, maximumWidth=200)
-        self.showSearch = QtWidgets.QShortcut(
-            "Ctrl+F",
-            self,
-            activated=lambda: self.search.show() or self.search.setFocus(),
+        self.search.returnPressed.connect(lambda: self.wb.findText(self.search.text()))
+        self.search.textChanged.connect(lambda: self.wb.findText(self.search.text()))
+        self.showSearch = QtWidgets.QShortcut(QtGui.QKeySequence.Find, self)
+        self.showSearch.activated.connect(
+            lambda: self.search.show() or self.search.setFocus()
         )
         self.hideSearch = QtWidgets.QShortcut(
             "Esc", self, activated=lambda: (self.search.hide(), self.setFocus())
