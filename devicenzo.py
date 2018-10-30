@@ -24,7 +24,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.tabs)
         self.bars = {}
         self.star_action = QtWidgets.QAction(
-            QtGui.QIcon.fromTheme("emblem-favorite"),
+            QtGui.QIcon.fromTheme("user-bookmarks"),
             "Bookmark",
             self,
             checkable=True,
@@ -254,6 +254,7 @@ class Tab(QtWidgets.QWidget):
         )
         self.urlFocus = QtWidgets.QShortcut("Ctrl+l", self, activated=self.url.setFocus)
 
+        # FIXME: reimplement printing
         # self.previewer = QtWidgets.QPrintPreviewDialog(paintRequested=self.web_view.print_)
         # self.do_print = QtWidgets.QShortcut("Ctrl+p", self, activated=self.previewer.exec_)
         # self.web_view.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
