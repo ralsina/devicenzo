@@ -4,7 +4,6 @@
 import json
 import os
 import sys
-import tempfile
 
 from PySide2 import QtCore, QtGui, QtNetwork, QtWebEngineWidgets, QtWidgets
 
@@ -117,11 +116,8 @@ class MainWindow(QtWidgets.QMainWindow):
         with open(fname, "wb") as f:
             f.write(str(reply.readAll()))
 
-    progress = lambda self, received, total: self.bars[self.sender().url().toString()][
-        0
-    ].setValue(
-        100. * received / total
-    )
+    def progress(self, received, total):
+        self.bars[self.sender().url().toString()][0].setValue(100. * received / total)
 
     def closeEvent(self, ev):
         self.put("history", self.history)
@@ -258,18 +254,9 @@ class Tab(QtWidgets.QWidget):
         self.wb.layout().addWidget(self.pbar, 0, QtCore.Qt.AlignRight)
         self.wb.layout().setContentsMargins(3, 3, 25, 3)
 
-        self.do_close = QtWidgets.QShortcut(
-            "Ctrl+W",
-            self,
-            activated=lambda: container.tabs.removeTab(container.tabs.indexOf(self)),
-        )
-        self.do_quit = QtWidgets.QShortcut(
-            "Ctrl+q", self, activated=lambda: container.close()
-        )
-        self.zoomIn = QtWidgets.QShortcut(
-            "Ctrl++",
-            self,
-            activated=lambda: self.wb.setZoomFactor(self.wb.zoomFactor() + 0.2),
+        self.zoomIn = QtWidgets.QShortcut("Ctrl++", self)
+        self.zoomIn.activated.connect(
+            lambda: self.wb.setZoomFactor(self.wb.zoomFactor() + 0.2)
         )
         self.zoomOut = QtWidgets.QShortcut(
             "Ctrl+-",
@@ -287,10 +274,15 @@ class Tab(QtWidgets.QWidget):
         # self.wb.settings().setIconDatabasePath(tempfile.mkdtemp())
 
         self.wb.load(url)
+        import pdb
 
-    amCurrent = lambda self: self.container.tabs.currentWidget() == self
+        pdb.set_trace()
 
-    createWindow = lambda self, windowType: self.container.addTab()
+    def amCurrent(self):
+        return self.container.tabs.currentWidget() == self
+
+    def createWindow(self, windowType):
+        return self.container.addTab()
 
 
 if __name__ == "__main__":
