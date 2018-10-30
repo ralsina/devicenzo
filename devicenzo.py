@@ -171,9 +171,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def addToHistory(self, url):
         self.history.append(url)
-
-
-# self.completer.setModel(list(set(list(self.bookmarks.keys()) + self.history)))
+        self.completer.setModel(
+            QtCore.QStringListModel(
+                list(set(list(self.bookmarks.keys()) + self.history))
+            )
+        )
 
 
 class Tab(QtWidgets.QWidget):
