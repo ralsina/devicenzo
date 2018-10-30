@@ -207,15 +207,21 @@ class Tab(QtWidgets.QWidget):
         # self.wb.page().setForwardUnsupportedContent(True)
         # self.wb.page().unsupportedContent.connect(container.fetch)
         # self.wb.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
-
-        self.setLayout(QtWidgets.QVBoxLayout(spacing=0))
-        self.layout().setContentsMargins(0, 0, 0, 0)
         self.tb = QtWidgets.QToolBar("Main Toolbar", self)
-        self.layout().addWidget(self.tb)
-        self.layout().addWidget(self.wb)
-        # for a, sc in [[QtWebKit.QWebPage.Back, "Alt+Left"], [QtWebKit.QWebPage.Forward, "Alt+Right"], [QtWebKit.QWebPage.Reload, "Ctrl+r"]]:
-        #     self.tb.addAction(self.wb.pageAction(a))
-        #     self.wb.pageAction(a).setShortcut(sc)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.tb, stretch=0)
+        layout.addWidget(self.wb, stretch=1000)
+        layout.activate()
+        self.setLayout(layout)
+        for a, sc in [
+            [QtWebEngineWidgets.QWebEnginePage.Back, "Alt+Left"],
+            [QtWebEngineWidgets.QWebEnginePage.Forward, "Alt+Right"],
+            [QtWebEngineWidgets.QWebEnginePage.Reload, "Ctrl+r"],
+        ]:
+            self.tb.addAction(self.wb.pageAction(a))
+            self.wb.pageAction(a).setShortcut(sc)
 
         self.url = QtWidgets.QLineEdit()
         self.url.returnPressed.connect(
