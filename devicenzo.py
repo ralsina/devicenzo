@@ -73,24 +73,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         [self.addTab(QtCore.QUrl(u)) for u in self.get("tabs", [])]
 
-    def fetch(self, reply):
-        destination = QtWidgets.QFileDialog.getSaveFileName(
-            self,
-            "Save File",
-            os.path.expanduser(os.path.join("~", reply.url().path().split("/")[-1])),
-        )
-        if destination:
-            bar = QtWidgets.QProgressBar(
-                format="%p% - " + os.path.basename(destination)
-            )
-            cancel = QtWidgets.QToolButton(
-                bar, icon=QtGui.fromTheme("process-stop"), clicked=reply.abort
-            )
-            self.downloads.addWidget(bar)
-            reply.downloadProgress.connect(self.progress)
-            reply.finished.connect(self.finished)
-            self.bars[reply.url().toString()] = [bar, reply, destination, cancel]
-
     def finished(self):
         url = self.sender().url().toString()
         bar, reply, fname, cancel = self.bars[url]
@@ -213,6 +195,18 @@ class Tab(QtWidgets.QWidget):
             self.tb.addAction(self.web_view.pageAction(a))
             self.web_view.pageAction(a).setShortcut(sc)
 
+        def save_page(*a, view=self.web_view):
+            destination = QtWidgets.QFileDialog.getSaveFileName(self, "Save Page")
+            print(repr(destination))
+            if destination:
+                view.page().save(destination[0])
+
+        self.web_view.pageAction(
+            QtWebEngineWidgets.QWebEnginePage.SavePage
+        ).triggered.connect(
+            save_page
+        )
+
         self.url = QtWidgets.QLineEdit()
         self.url.returnPressed.connect(
             lambda: self.web_view.load(QtCore.QUrl.fromUserInput(self.url.text()))
@@ -221,7 +215,6 @@ class Tab(QtWidgets.QWidget):
         self.tb.addWidget(self.url)
         self.tb.addAction(container.star_action)
 
-        # FIXME: if I was seriously golfing, all of these can go in a single lambda
         self.web_view.urlChanged.connect(lambda u: self.url.setText(u.toString()))
         self.web_view.urlChanged.connect(lambda u: container.addToHistory(u.toString()))
         self.web_view.urlChanged.connect(
