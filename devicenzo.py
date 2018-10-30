@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-"A web browser that will never exceed 128 lines of code. (not counting blanks)"
+"A web browser that will never exceed 256 lines of code (black-formatted) (not counting blanks)"
 
 import json
 import os
@@ -14,7 +14,7 @@ settings = QtCore.QSettings("ralsina", "devicenzo")
 class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
-        QtWidgets.QMainWindow.__init__(self)
+        super(MainWindow, self).__init__()
         self.tabs = QtWidgets.QTabWidget(
             self, tabsClosable=True, movable=True, elideMode=QtCore.Qt.ElideRight
         )
@@ -183,8 +183,8 @@ class MainWindow(QtWidgets.QMainWindow):
 class Tab(QtWidgets.QWidget):
 
     def __init__(self, url, container):
+        super(Tab, self).__init__()
         self.container = container
-        QtWidgets.QWidget.__init__(self)
         self.pbar = QtWidgets.QProgressBar(maximumWidth=120, visible=False)
         self.wb = QtWebEngineWidgets.QWebEngineView()
         self.wb.loadProgress.connect(
