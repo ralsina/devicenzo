@@ -237,7 +237,9 @@ class Tab(QtWidgets.QWidget):
         )
 
         # FIXME: do this using a tooltip
-        self.wb.page().linkHovered.connect(lambda l: container.statusBar().showMessage(l, 3000))
+        self.wb.page().linkHovered.connect(
+            lambda l: container.statusBar().showMessage(l, 3000)
+        )
 
         # self.search = QtWidgets.QLineEdit(visible=False, maximumWidth=200, returnPressed=lambda: self.wb.findText(self.search.text()), textChanged=lambda: self.wb.findText(self.search.text()))
         self.search = QtWidgets.QLineEdit(visible=False, maximumWidth=200)
