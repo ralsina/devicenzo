@@ -53,15 +53,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.history = self.get("history", []) + list(self.bookmarks.keys())
         self.completer = QtWidgets.QCompleter(self.history)
 
-        # Use a app-wide, persistent cookiejar
-        self.cookies = QtNetwork.QNetworkCookieJar(QtCore.QCoreApplication.instance())
-        self.cookies.setAllCookies(
-            [
-                QtNetwork.QNetworkCookie.parseCookies(c)[0]
-                for c in self.get("cookiejar", [])
-            ]
-        )
-
         # Downloads bar at the bottom of the window
         self.downloads = QtWidgets.QToolBar("Downloads")
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.downloads)
@@ -120,7 +111,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, ev):
         self.put("history", self.history)
-        self.put("cookiejar", [str(c.toRawForm()) for c in self.cookies.allCookies()])
         self.put(
             "tabs", [self.tabs.widget(i).url.text() for i in range(self.tabs.count())]
         )
@@ -204,7 +194,6 @@ class Tab(QtWidgets.QWidget):
                 container.tabs.indexOf(self), self.web_view.icon()
             )
         )
-        # self.wb.page().networkAccessManager().setCookieJar(container.cookies)
         # self.wb.page().setForwardUnsupportedContent(True)
         # self.wb.page().unsupportedContent.connect(container.fetch)
         # self.wb.page().downloadRequested.connect(lambda req: container.fetch(self.page().networkAccessManager().get(req)))
