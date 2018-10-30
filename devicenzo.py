@@ -274,9 +274,6 @@ class Tab(QtWidgets.QWidget):
         # self.wb.settings().setIconDatabasePath(tempfile.mkdtemp())
 
         self.wb.load(url)
-        import pdb
-
-        pdb.set_trace()
 
     def amCurrent(self):
         return self.container.tabs.currentWidget() == self
