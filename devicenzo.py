@@ -21,6 +21,11 @@ class MainWindow(QtWidgets.QMainWindow):
             lambda idx: self.tabs.widget(idx).deleteLater()
         )
         self.tabs.currentChanged.connect(self.currentTabChanged)
+        self.close_current_tab = QtWidgets.QAction(shortcut=QtGui.QKeySequence.Close)
+        self.close_current_tab.triggered.connect(
+            lambda: self.tabs.currentWidget().deleteLater()
+        )
+        self.addAction(self.close_current_tab)
         self.setCentralWidget(self.tabs)
         self.bars = {}
         self.star_action = QtWidgets.QAction(
