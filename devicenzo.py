@@ -262,14 +262,13 @@ class Tab(QtWidgets.QWidget):
         self.wb.layout().addWidget(self.pbar, 0, QtCore.Qt.AlignRight)
         self.wb.layout().setContentsMargins(3, 3, 25, 3)
 
-        self.zoomIn = QtWidgets.QShortcut("Ctrl++", self)
+        self.zoomIn = QtWidgets.QShortcut(QtGui.QKeySequence.ZoomIn, self)
         self.zoomIn.activated.connect(
             lambda: self.wb.setZoomFactor(self.wb.zoomFactor() + 0.2)
         )
-        self.zoomOut = QtWidgets.QShortcut(
-            "Ctrl+-",
-            self,
-            activated=lambda: self.wb.setZoomFactor(self.wb.zoomFactor() - 0.2),
+        self.zoomOut = QtWidgets.QShortcut(QtGui.QKeySequence.ZoomOut, self)
+        self.zoomOut.activated.connect(
+            lambda: self.wb.setZoomFactor(self.wb.zoomFactor() - 0.2)
         )
         self.zoomOne = QtWidgets.QShortcut(
             "Ctrl+0", self, activated=lambda: self.wb.setZoomFactor(1)
