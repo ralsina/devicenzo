@@ -182,24 +182,26 @@ class Tab(QtWidgets.QWidget):
     def __init__(self, url, container):
         super(Tab, self).__init__()
         self.container = container
-        self.pbar = QtWidgets.QProgressBar(maximumWidth=120, visible=False)
-        self.wb = QtWebEngineWidgets.QWebEngineView()
-        self.wb.loadProgress.connect(
+        self.web_view = QtWebEngineWidgets.QWebEngineView()
+        self.progress_bar = QtWidgets.QProgressBar(
+            self.container.statusBar(), maximumWidth=120, visible=False
+        )
+        self.web_view.loadProgress.connect(
             lambda v: (
-                self.pbar.show(), self.pbar.setValue(v)
+                self.progress_bar.show(), self.progress_bar.setValue(v)
             ) if self.amCurrent() else None
         )
-        self.wb.loadFinished.connect(self.pbar.hide)
-        self.wb.loadStarted.connect(
-            lambda: self.pbar.show() if self.amCurrent() else None
+        self.web_view.loadFinished.connect(self.progress_bar.hide)
+        self.web_view.loadStarted.connect(
+            lambda: self.progress_bar.show() if self.amCurrent() else None
         )
-        self.wb.titleChanged.connect(
+        self.web_view.titleChanged.connect(
             lambda t: container.tabs.setTabText(container.tabs.indexOf(self), t)
             or (container.setWindowTitle(t) if self.amCurrent() else None)
         )
-        self.wb.iconChanged.connect(
+        self.web_view.iconChanged.connect(
             lambda: container.tabs.setTabIcon(
-                container.tabs.indexOf(self), self.wb.icon()
+                container.tabs.indexOf(self), self.web_view.icon()
             )
         )
         # self.wb.page().networkAccessManager().setCookieJar(container.cookies)
@@ -211,7 +213,7 @@ class Tab(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.tb, stretch=0)
-        layout.addWidget(self.wb, stretch=1000)
+        layout.addWidget(self.web_view, stretch=1000)
         layout.activate()
         self.setLayout(layout)
         for a, sc in [
@@ -219,34 +221,40 @@ class Tab(QtWidgets.QWidget):
             [QtWebEngineWidgets.QWebEnginePage.Forward, "Alt+Right"],
             [QtWebEngineWidgets.QWebEnginePage.Reload, "Ctrl+r"],
         ]:
-            self.tb.addAction(self.wb.pageAction(a))
-            self.wb.pageAction(a).setShortcut(sc)
+            self.tb.addAction(self.web_view.pageAction(a))
+            self.web_view.pageAction(a).setShortcut(sc)
 
         self.url = QtWidgets.QLineEdit()
         self.url.returnPressed.connect(
-            lambda: self.wb.load(QtCore.QUrl.fromUserInput(self.url.text()))
+            lambda: self.web_view.load(QtCore.QUrl.fromUserInput(self.url.text()))
         )
         self.url.setCompleter(container.completer)
         self.tb.addWidget(self.url)
         self.tb.addAction(container.star_action)
 
         # FIXME: if I was seriously golfing, all of these can go in a single lambda
-        self.wb.urlChanged.connect(lambda u: self.url.setText(u.toString()))
-        self.wb.urlChanged.connect(lambda u: container.addToHistory(u.toString()))
-        self.wb.urlChanged.connect(
+        self.web_view.urlChanged.connect(lambda u: self.url.setText(u.toString()))
+        self.web_view.urlChanged.connect(lambda u: container.addToHistory(u.toString()))
+        self.web_view.urlChanged.connect(
             lambda u: container.star_action.setChecked(
                 u.toString() in container.bookmarks
             ) if self.amCurrent() else None
         )
 
         # FIXME: do this using a tooltip
-        self.wb.page().linkHovered.connect(
+        self.web_view.page().linkHovered.connect(
             lambda l: container.statusBar().showMessage(l, 3000)
         )
 
-        self.search = QtWidgets.QLineEdit(visible=False, maximumWidth=200)
-        self.search.returnPressed.connect(lambda: self.wb.findText(self.search.text()))
-        self.search.textChanged.connect(lambda: self.wb.findText(self.search.text()))
+        self.search = QtWidgets.QLineEdit(
+            self.web_view, visible=False, maximumWidth=200
+        )
+        self.search.returnPressed.connect(
+            lambda: self.web_view.findText(self.search.text())
+        )
+        self.search.textChanged.connect(
+            lambda: self.web_view.findText(self.search.text())
+        )
         self.showSearch = QtWidgets.QShortcut(QtGui.QKeySequence.Find, self)
         self.showSearch.activated.connect(
             lambda: self.search.show() or self.search.setFocus()
@@ -255,22 +263,16 @@ class Tab(QtWidgets.QWidget):
             "Esc", self, activated=lambda: (self.search.hide(), self.setFocus())
         )
 
-        self.wb.setLayout(QtWidgets.QVBoxLayout(spacing=0))
-        self.wb.layout().addWidget(self.search, 0, QtCore.Qt.AlignRight)
-        self.wb.layout().addStretch()
-        self.wb.layout().addWidget(self.pbar, 0, QtCore.Qt.AlignRight)
-        self.wb.layout().setContentsMargins(3, 3, 25, 3)
-
         self.zoomIn = QtWidgets.QShortcut(QtGui.QKeySequence.ZoomIn, self)
         self.zoomIn.activated.connect(
-            lambda: self.wb.setZoomFactor(self.wb.zoomFactor() + 0.2)
+            lambda: self.web_view.setZoomFactor(self.web_view.zoomFactor() + 0.2)
         )
         self.zoomOut = QtWidgets.QShortcut(QtGui.QKeySequence.ZoomOut, self)
         self.zoomOut.activated.connect(
-            lambda: self.wb.setZoomFactor(self.wb.zoomFactor() - 0.2)
+            lambda: self.web_view.setZoomFactor(self.web_view.zoomFactor() - 0.2)
         )
         self.zoomOne = QtWidgets.QShortcut(
-            "Ctrl+0", self, activated=lambda: self.wb.setZoomFactor(1)
+            "Ctrl+0", self, activated=lambda: self.web_view.setZoomFactor(1)
         )
         self.urlFocus = QtWidgets.QShortcut("Ctrl+l", self, activated=self.url.setFocus)
 
@@ -279,7 +281,7 @@ class Tab(QtWidgets.QWidget):
         # self.wb.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         # self.wb.settings().setIconDatabasePath(tempfile.mkdtemp())
 
-        self.wb.load(url)
+        self.web_view.load(url)
 
     def amCurrent(self):
         return self.container.tabs.currentWidget() == self
