@@ -8,7 +8,7 @@ A web browser. It has more or less the usual features:
 * Shows webpages
 * Bookmarks
 
-![]
+![screenshot](https://raw.githubusercontent.com/ralsina/devicenzo/master/devicenzo.png)
 
 ## What is different about it?
 
