@@ -11,7 +11,6 @@ settings = QtCore.QSettings("ralsina", "devicenzo")
 
 
 class MainWindow(QtWidgets.QMainWindow):
-
     def __init__(self):
         super(MainWindow, self).__init__()
         self.tabs = QtWidgets.QTabWidget(
@@ -66,9 +65,9 @@ class MainWindow(QtWidgets.QMainWindow):
         proxy_url = QtCore.QUrl(os.environ.get("http_proxy", ""))
         QtNetwork.QNetworkProxy.setApplicationProxy(
             QtNetwork.QNetworkProxy(
-                QtNetwork.QNetworkProxy.HttpProxy if proxy_url.scheme().startswith(
-                    "http"
-                ) else QtNetwork.QNetworkProxy.Socks5Proxy,
+                QtNetwork.QNetworkProxy.HttpProxy
+                if proxy_url.scheme().startswith("http")
+                else QtNetwork.QNetworkProxy.Socks5Proxy,
                 proxy_url.host(),
                 proxy_url.port(),
                 proxy_url.userName(),
@@ -94,7 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
             f.write(str(reply.readAll()))
 
     def progress(self, received, total):
-        self.bars[self.sender().url().toString()][0].setValue(100. * received / total)
+        self.bars[self.sender().url().toString()][0].setValue(100.0 * received / total)
 
     def closeEvent(self, ev):
         self.put("history", self.history)
@@ -155,7 +154,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class Tab(QtWidgets.QWidget):
-
     def __init__(self, url, container):
         super(Tab, self).__init__()
         self.container = container
@@ -164,9 +162,9 @@ class Tab(QtWidgets.QWidget):
             self.container.statusBar(), maximumWidth=120, visible=False
         )
         self.web_view.loadProgress.connect(
-            lambda v: (
-                self.progress_bar.show(), self.progress_bar.setValue(v)
-            ) if self.amCurrent() else None
+            lambda v: (self.progress_bar.show(), self.progress_bar.setValue(v))
+            if self.amCurrent()
+            else None
         )
         self.web_view.loadFinished.connect(self.progress_bar.hide)
         self.web_view.loadStarted.connect(
@@ -205,9 +203,7 @@ class Tab(QtWidgets.QWidget):
 
         self.web_view.pageAction(
             QtWebEngineWidgets.QWebEnginePage.SavePage
-        ).triggered.connect(
-            save_page
-        )
+        ).triggered.connect(save_page)
 
         self.url = QtWidgets.QLineEdit()
         self.url.returnPressed.connect(
@@ -222,7 +218,9 @@ class Tab(QtWidgets.QWidget):
         self.web_view.urlChanged.connect(
             lambda u: container.star_action.setChecked(
                 u.toString() in container.bookmarks
-            ) if self.amCurrent() else None
+            )
+            if self.amCurrent()
+            else None
         )
 
         self.web_view.page().linkHovered.connect(
@@ -280,6 +278,6 @@ if __name__ == "__main__":
     for url in sys.argv[1:]:
         wb.addTab(QtCore.QUrl.fromUserInput(url))
     if wb.tabs.count() == 0:
-        wb.addTab(QtCore.QUrl("http://devicenzo.googlecode.com"))
+        wb.addTab(QtCore.QUrl("https://github.com/ralsina/devicenzo"))
     wb.show()
     sys.exit(app.exec_())
