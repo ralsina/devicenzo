@@ -2,7 +2,13 @@
 
 ## What is it?
 
-A web browser.
+A web browser. It has more or less the usual features:
+
+* Multiple tabs
+* Shows webpages
+* Bookmarks
+
+![]
 
 ## What is different about it?
 
